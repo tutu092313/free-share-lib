@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>随心资料分享库 · 源代码文档</title>
+<style>
+  /* ====== 全局 ====== */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --brand: #2c5f8a; --brand-light: #eef5ff; --brand-dark: #163854;
+    --slate-50: #f8fafc; --slate-100: #f1f5f9; --slate-200: #e2e8f0;
+    --slate-400: #94a3b8; --slate-600: #475569; --slate-800: #1e293b;
+    --red: #dc2626; --blue: #2563eb; --green: #059669; --amber: #d97706;
+    --code-bg: #0f172a; --code-text: #e2e8f0;
+    --sidebar-w: 240px;
+  }
+  html { scroll-behavior: smooth; }
+  body { font-family: "PingFang SC","Microsoft YaHei","Helvetica Neue",Arial,sans-serif;
+         background: var(--slate-50); color: var(--slate-800); line-height: 1.7; }
+
+  /* ====== 侧边栏 ====== */
+  .sidebar {
+    position: fixed; top: 0; left: 0; bottom: 0; width: var(--sidebar-w);
+    background: white; border-right: 1px solid var(--slate-200);
+    overflow-y: auto; z-index: 100; padding: 20px 0;
+  }
+  .sidebar-title {
+    padding: 0 20px 16px; font-size: 13px; font-weight: 700;
+    color: var(--brand-dark); border-bottom: 1px solid var(--slate-100); margin-bottom: 8px;
+  }
+  .sidebar-title span { font-size: 11px; font-weight: 400; color: var(--slate-400); display: block; margin-top: 2px; }
+  .sidebar a {
+    display: block; padding: 5px 20px; font-size: 13px; color: var(--slate-600);
+    text-decoration: none; border-left: 3px solid transparent; transition: all .15s;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .sidebar a:hover { color: var(--brand); background: var(--brand-light); }
+  .sidebar a.l2 { padding-left: 32px; font-size: 12px; }
+  .sidebar a.active { color: var(--brand); border-left-color: var(--brand); background: var(--brand-light); }
+
+  /* ====== 主内容 ====== */
+  .main { margin-left: var(--sidebar-w); padding: 40px 48px; max-width: 1000px; }
+
+  /* ====== 封面 ====== */
+  .cover {
+    background: linear-gradient(135deg, var(--brand) 0%, var(--brand-dark) 100%);
+    color: white; border-radius: 16px; padding: 40px; margin-bottom: 48px;
+  }
+  .cover h1 { font-size: 28px; font-weight: 800; line-height: 1.3; }
+  .cover .sub { font-size: 14px; opacity: .8; margin-top: 6px; }
+  .cover .meta { margin-top: 24px; display: flex; flex-wrap: wrap; gap: 10px; }
+  .cover .badge {
+    background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.25);
+    backdrop-filter: blur(4px); border-radius: 20px; padding: 4px 12px; font-size: 12px;
+  }
+
+  /* ====== 章节标题 ====== */
+  .section { margin-bottom: 56px; }
+  h2.section-title {
+    font-size: 22px; font-weight: 700; color: var(--brand-dark);
+    border-bottom: 2px solid var(--brand); padding-bottom: 8px; margin-bottom: 20px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  h2.section-title .icon { font-size: 20px; }
+  h3.sub-title {
+    font-size: 16px; font-weight: 600; color: var(--slate-800);
+    margin: 24px 0 10px; padding-left: 10px; border-left: 3px solid var(--brand);
+  }
+  h4.mini-title { font-size: 14px; font-weight: 600; color: var(--slate-600); margin: 16px 0 6px; }
+
+  /* ====== 描述文字 ====== */
+  p { margin-bottom: 12px; font-size: 14px; color: var(--slate-600); }
+
+  /* ====== 表格 ====== */
+  table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 13px; }
+  thead tr { background: var(--slate-100); }
+  th, td { text-align: left; padding: 9px 14px; border: 1px solid var(--slate-200); }
+  th { font-weight: 600; color: var(--slate-800); }
+  tr:nth-child(even) td { background: var(--slate-50); }
+  .tag { display: inline-block; border-radius: 4px; padding: 2px 7px; font-size: 11px; font-weight: 600; }
+  .tag-pdf  { background: #fee2e2; color: var(--red); }
+  .tag-js   { background: #fef9c3; color: #92400e; }
+  .tag-html { background: #ffedd5; color: #c2410c; }
+  .tag-css  { background: #ede9fe; color: #7c3aed; }
+  .tag-data { background: #d1fae5; color: #065f46; }
+
+  /* ====== 代码块 ====== */
+  .code-wrap { margin: 14px 0; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,.08); }
+  .code-header {
+    background: #1e293b; padding: 8px 16px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .code-header .lang { font-size: 12px; color: #94a3b8; font-family: monospace; }
+  .code-header .fname { font-size: 12px; color: #64748b; }
+  pre { background: var(--code-bg); margin: 0; overflow-x: auto; }
+  pre code {
+    display: block; padding: 20px; font-family: "JetBrains Mono","Fira Code","Cascadia Code",Consolas,monospace;
+    font-size: 12.5px; line-height: 1.65; color: var(--code-text); white-space: pre;
+  }
+  /* 简单语法着色 */
+  .kw   { color: #c084fc; }  /* keyword */
+  .str  { color: #86efac; }  /* string */
+  .cmt  { color: #64748b; font-style: italic; }  /* comment */
+  .fn   { color: #67e8f9; }  /* function */
+  .num  { color: #fbbf24; }  /* number */
+  .cls  { color: #f472b6; }  /* class/tag */
+  .attr { color: #a5f3fc; }  /* attr/property */
+  .val  { color: #fde68a; }  /* value */
+
+  /* ====== 信息框 ====== */
+  .info-box {
+    border-radius: 10px; padding: 14px 18px; margin: 14px 0; font-size: 13px;
+    display: flex; gap: 10px; align-items: flex-start;
+  }
+  .info-box .ico { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+  .info-box.tip  { background: #f0fdf4; border: 1px solid #bbf7d0; color: #15803d; }
+  .info-box.warn { background: #fffbeb; border: 1px solid #fde68a; color: #92400e; }
+  .info-box.info { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; }
+
+  /* ====== 文件树 ====== */
+  .file-tree { background: var(--code-bg); color: var(--code-text); border-radius: 10px;
+               padding: 20px 24px; font-family: monospace; font-size: 13px; line-height: 1.9; margin: 14px 0; }
+  .file-tree .dir { color: #67e8f9; }
+  .file-tree .file { color: #e2e8f0; }
+  .file-tree .note { color: #64748b; font-style: italic; }
+
+  /* ====== 数据流图 ====== */
+  .flow {
+    display: flex; gap: 0; align-items: center; flex-wrap: wrap;
+    margin: 16px 0; font-size: 13px;
+  }
+  .flow-box {
+    background: var(--brand-light); border: 1.5px solid #93c5fd; color: var(--brand-dark);
+    border-radius: 8px; padding: 7px 14px; font-weight: 600; white-space: nowrap;
+  }
+  .flow-arrow { color: var(--slate-400); padding: 0 6px; font-size: 16px; }
+
+  /* ====== 响应式提示 ====== */
+  @media (max-width: 768px) {
+    .sidebar { display: none; }
+    .main { margin-left: 0; padding: 24px 20px; }
+  }
+
+  /* ====== 打印 ====== */
+  @media print {
+    .sidebar { display: none; }
+    .main { margin-left: 0; padding: 20px; max-width: 100%; }
+    .code-wrap { box-shadow: none; border: 1px solid #e2e8f0; }
+    pre code { font-size: 11px; }
+  }
+
+  /* ====== 小工具 ====== */
+  .cols-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  .card {
+    background: white; border: 1px solid var(--slate-200);
+    border-radius: 10px; padding: 16px;
+  }
+  .card h4 { font-size: 13px; font-weight: 700; margin-bottom: 6px; color: var(--brand-dark); }
+  .card p  { font-size: 12.5px; color: var(--slate-600); margin: 0; }
+  ul.feature-list { list-style: none; margin: 0 0 14px; }
+  ul.feature-list li { font-size: 13.5px; color: var(--slate-600); padding: 4px 0; padding-left: 20px; position: relative; }
+  ul.feature-list li::before { content: "✓"; position: absolute; left: 0; color: var(--green); font-weight: 700; }
+  hr.divider { border: none; border-top: 1px solid var(--slate-200); margin: 40px 0; }
+</style>
+</head>
+<body>
+
+<!-- 侧边栏目录 -->
+<nav class="sidebar">
+  <div class="sidebar-title">
+    随心资料分享库
+    <span>源代码文档</span>
+  </div>
+  <a href="#cover">封面 & 概述</a>
+  <a href="#overview">一、项目概述</a>
+  <a href="#structure">二、文件结构</a>
+  <a href="#tech">三、技术栈</a>
+  <a href="#arch">四、架构说明</a>
+  <a href="#data">五、数据模型</a>
+  <a href="#html">六、index.html 源码</a>
+  <a class="l2" href="#html-head">6.1 头部 &amp; 依赖</a>
+  <a class="l2" href="#html-nav">6.2 顶部导航</a>
+  <a class="l2" href="#html-views">6.3 各视图 HTML</a>
+  <a class="l2" href="#html-modal">6.4 登录弹窗</a>
+  <a href="#js">七、app.js 源码</a>
+  <a class="l2" href="#js-storage">7.1 存储 & 工具</a>
+  <a class="l2" href="#js-dict">7.2 字典模块</a>
+  <a class="l2" href="#js-feed">7.3 投喂模块</a>
+  <a class="l2" href="#js-auth">7.4 鉴权模块</a>
+  <a class="l2" href="#js-resource">7.5 资料模块</a>
+  <a class="l2" href="#js-thumb">7.6 缩略图生成</a>
+  <a class="l2" href="#js-app">7.7 App 主对象</a>
+  <a href="#readme">八、README 摘要</a>
+  <a href="#appendix">九、附录</a>
+</nav>
+
+<!-- 主内容 -->
+<div class="main">
+
+<!-- ====== 封面 ====== -->
+<div class="cover" id="cover">
+  <h1>随心资料分享库<br/>源代码文档</h1>
+  <div class="sub">Web 前端开发技术 · 实践报告（一）配套实现</div>
+  <div class="meta">
+    <span class="badge">📚 啥都赢小组</span>
+    <span class="badge">🎓 24级新闻学3班</span>
+    <span class="badge">👩‍💻 非迪 / 唐努尔 / 吕莹莹</span>
+    <span class="badge">📅 2026-06-15</span>
+    <span class="badge">🛠 HTML + JS + Tailwind CSS</span>
+    <span class="badge">💾 localStorage（纯前端）</span>
+  </div>
+</div>
+
+<!-- ====== 一、项目概述 ====== -->
+<div class="section" id="overview">
+  <h2 class="section-title"><span class="icon">📋</span>一、项目概述</h2>
+  <p>
+    "随心资料分享库"是一款面向高校学生的<strong>通用型学习资料分享 Web 小程序</strong>，
+    旨在解决学生群体资料分散、难以统一检索与分享的痛点。
+    项目采用纯前端实现，无需后端与数据库，所有数据持久化于浏览器 <code>localStorage</code>，
+    双击 <code>index.html</code> 即可完整体验全部功能。
+  </p>
+  <div class="cols-2">
+    <div class="card">
+      <h4>🎯 核心目标</h4>
+      <p>通用性（任意专业/领域）、零门槛（无需后端）、多格式（PDF/Word/图片）、可扩展（对接真实后端）</p>
+    </div>
+    <div class="card">
+      <h4>📦 项目规模</h4>
+      <p>2 个源文件（index.html 419 行 + app.js 1183 行）；16 份内置示例资料；6 个单页视图</p>
+    </div>
+  </div>
+  <h3 class="sub-title">功能清单</h3>
+  <ul class="feature-list">
+    <li>用户模块：注册 / 登录 / 登出 / 个人中心 / 体验账号一键登录</li>
+    <li>资料上传：PDF / Word(.docx) / 图片，≤8MB，拖拽 + 点击，自动生成缩略图</li>
+    <li>专业 × 领域双维度分类（20 个专业 + 15 个领域，用户可自由扩展）</li>
+    <li>全文搜索（标题、描述、标签、专业名）+ 三种排序（最新/最热/下载最多）</li>
+    <li>多格式在线预览（PDF.js / mammoth.js / 原生图片）</li>
+    <li>评论 / 点赞 / 收藏 / 下载 / 删除自己上传的资料</li>
+    <li>投喂系统：JSON 批量入库 / 填表投喂 / 文件批量拖入</li>
+    <li>响应式适配：桌面4栏 + 移动底部 Tab 栏</li>
+  </ul>
+</div>
+
+<!-- ====== 二、文件结构 ====== -->
+<div class="section" id="structure">
+  <h2 class="section-title"><span class="icon">📁</span>二、文件结构</h2>
+  <div class="file-tree">
+    <span class="dir">site/</span><br/>
+    <span>├── </span><span class="file">index.html</span>   <span class="note"># 单页应用入口 · 419 行 · 含 6 个视图</span><br/>
+    <span>├── </span><span class="file">app.js</span>       <span class="note"># 全部业务逻辑 · 1183 行</span><br/>
+    <span>├── </span><span class="file">README.md</span>    <span class="note"># 项目文档（378 行）</span><br/>
+    <span>├── </span><span class="file">source_doc.html</span> <span class="note"># 本源码文档</span><br/>
+    <span>└── </span><span class="dir">assets/</span>      <span class="note"># 设计文档原图（3 张）</span><br/>
+    <span>    ├── </span><span class="file">image1.jpeg</span><br/>
+    <span>    ├── </span><span class="file">image2.jpeg</span><br/>
+    <span>    └── </span><span class="file">image3.jpeg</span>
+  </div>
+  <div class="info-box tip">
+    <span class="ico">💡</span>
+    <div>整个项目<strong>仅 2 个核心文件</strong>（index.html + app.js），无需 npm install、无需打包，
+    双击 index.html 或用 <code>python -m http.server 8765</code> 启动即可。</div>
+  </div>
+</div>
+
+<!-- ====== 三、技术栈 ====== -->
+<div class="section" id="tech">
+  <h2 class="section-title"><span class="icon">🛠</span>三、技术栈</h2>
+  <table>
+    <thead><tr><th>技术</th><th>版本 / 引入方式</th><th>用途</th><th>备注</th></tr></thead>
+    <tbody>
+      <tr><td><span class="tag tag-html">HTML5</span></td><td>原生</td><td>页面结构 · 6 个视图</td><td>语义化标签 + viewport</td></tr>
+      <tr><td><span class="tag tag-css">Tailwind CSS</span></td><td>CDN 3.x</td><td>全部样式</td><td>实践作品免构建，工具类快速布局</td></tr>
+      <tr><td><span class="tag tag-js">JavaScript</span></td><td>ES6+，原生</td><td>全部业务逻辑</td><td>零依赖、零打包</td></tr>
+      <tr><td>PDF.js</td><td>cdnjs 3.11.174</td><td>PDF 在线预览 & 缩略图</td><td>浏览器端渲染</td></tr>
+      <tr><td>mammoth.js</td><td>cdnjs 1.6.0</td><td>Word(.docx) 转 HTML 预览</td><td>浏览器端转换</td></tr>
+      <tr><td><span class="tag tag-data">localStorage</span></td><td>浏览器原生</td><td>数据持久化</td><td>无后端，容量约 5~10MB</td></tr>
+    </tbody>
+  </table>
+  <div class="info-box warn">
+    <span class="ico">⚠️</span>
+    <div>因为使用 localStorage，<strong>清浏览器缓存 = 清所有数据</strong>。
+    实践二/三 可替换为 RESTful API（Node.js / Python FastAPI）+ 数据库，保持视图层不变。</div>
+  </div>
+</div>
+
+<!-- ====== 四、架构说明 ====== -->
+<div class="section" id="arch">
+  <h2 class="section-title"><span class="icon">🏗️</span>四、架构说明</h2>
+  <p>整个应用是一个<strong>单页应用（SPA）</strong>，通过 URL Hash 路由在 6 个视图之间切换，
+  无需页面刷新。所有视图共用同一套 DOM，通过 JS 控制显示/隐藏（<code>display:none / block</code>）。</p>
+  <h3 class="sub-title">app.js 模块划分</h3>
+  <table>
+    <thead><tr><th>模块</th><th>关键对象/函数</th><th>职责</th></tr></thead>
+    <tbody>
+      <tr><td>存储层</td><td><code>LS</code> 常量 + <code>get/set</code></td><td>localStorage 键名统一管理；读/写 JSON</td></tr>
+      <tr><td>字典模块</td><td><code>Dict</code></td><td>专业 / 领域字典，支持动态扩展</td></tr>
+      <tr><td>投喂模块</td><td><code>Feed</code></td><td>通用入库工具：标准化字段 + 批量写入</td></tr>
+      <tr><td>鉴权模块</td><td><code>Auth</code></td><td>注册 / 登录 / 退出 / 体验账号 / 弹窗</td></tr>
+      <tr><td>数据访问层</td><td><code>Resource / Comment / Like / Fav</code></td><td>资料、评论、点赞、收藏的增删改查</td></tr>
+      <tr><td>文件处理</td><td><code>readFileAsDataURL / makeThumbnail / iconThumb</code></td><td>文件读取为 base64；PDF/图片/Word 缩略图生成</td></tr>
+      <tr><td>App 主对象</td><td><code>App</code></td><td>路由、视图渲染、事件绑定、状态管理</td></tr>
+      <tr><td>工具函数</td><td><code>uid / fmtTime / fmtSize / escapeHtml / toast</code></td><td>通用工具</td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="sub-title">路由流程</h3>
+  <div class="flow">
+    <div class="flow-box">URL Hash 变化</div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-box">handleHash()</div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-box">App.go(view)</div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-box">切换视图 DOM</div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-box">reRender()</div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-box">渲染对应视图</div>
+  </div>
+
+  <h3 class="sub-title">数据流</h3>
+  <div class="flow">
+    <div class="flow-box">用户操作</div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-box">事件监听</div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-box">数据层（Resource/Like/...）</div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-box">写入 localStorage</div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-box">重新渲染视图</div>
+  </div>
+</div>
+
+<!-- ====== 五、数据模型 ====== -->
+<div class="section" id="data">
+  <h2 class="section-title"><span class="icon">💾</span>五、数据模型</h2>
+
+  <h3 class="sub-title">User — 用户</h3>
+  <div class="code-wrap">
+    <div class="code-header"><span class="lang">javascript</span><span class="fname">localStorage: sxsx.users (数组)</span></div>
+    <pre><code><span class="cmt">// 用户对象结构</span>
+{
+  <span class="attr">id</span>:        <span class="str">'u_xxxxx'</span>,          <span class="cmt">// 唯一 ID（uid() 生成）</span>
+  <span class="attr">account</span>:  <span class="str">'P241012503'</span>,        <span class="cmt">// 登录账号（学号或自定义）</span>
+  <span class="attr">password</span>: <span class="str">'xxxxxx'</span>,            <span class="cmt">// 密码（演示用明文，生产请 hash+盐）</span>
+  <span class="attr">name</span>:     <span class="str">'噜噜学姐'</span>,           <span class="cmt">// 昵称</span>
+  <span class="attr">bio</span>:      <span class="str">'新闻学大四，分享资料ing'</span>, <span class="cmt">// 个人简介</span>
+  <span class="attr">createdAt</span>: <span class="num">1750000000000</span>        <span class="cmt">// 注册时间戳</span>
+}</code></pre>
+  </div>
+
+  <h3 class="sub-title">Resource — 资料</h3>
+  <div class="code-wrap">
+    <div class="code-header"><span class="lang">javascript</span><span class="fname">localStorage: sxsx.resources (数组)</span></div>
+    <pre><code>{
+  <span class="attr">id</span>:           <span class="str">'r_xxxxx'</span>,
+  <span class="attr">title</span>:        <span class="str">'新闻学概论·第三章笔记'</span>,
+  <span class="attr">desc</span>:         <span class="str">'马克思主义新闻观...'</span>,
+  <span class="attr">major</span>:        <span class="str">'新闻学'</span>,              <span class="cmt">// 专业（关联 Dict.majors）</span>
+  <span class="attr">field</span>:        <span class="str">'period'</span>,              <span class="cmt">// 领域 id（关联 Dict.fields）</span>
+  <span class="attr">tags</span>:         [<span class="str">'笔记'</span>, <span class="str">'期末复习'</span>],
+  <span class="attr">type</span>:         <span class="str">'pdf'</span>,                 <span class="cmt">// 'pdf' | 'docx' | 'image'</span>
+  <span class="attr">size</span>:         <span class="num">320000</span>,               <span class="cmt">// 文件大小（字节）</span>
+  <span class="attr">fileName</span>:     <span class="str">'新闻学概论笔记.pdf'</span>,
+  <span class="attr">fileData</span>:     <span class="str">'data:application/pdf;base64,...'</span>, <span class="cmt">// 真实文件 base64（示例数据为 null）</span>
+  <span class="attr">thumb</span>:        <span class="str">'data:image/jpeg;base64,...'</span>,     <span class="cmt">// 缩略图 base64</span>
+  <span class="attr">uploaderId</span>:  <span class="str">'u_lulu'</span>,
+  <span class="attr">uploaderName</span>:<span class="str">'噜噜学姐'</span>,             <span class="cmt">// 冗余字段，便于"社区贡献"显示</span>
+  <span class="attr">createdAt</span>:   <span class="num">1750000000000</span>,
+  <span class="attr">downloads</span>:   <span class="num">42</span>
+}</code></pre>
+  </div>
+
+  <h3 class="sub-title">Comment / Like / Fav — 互动数据</h3>
+  <div class="code-wrap">
+    <div class="code-header"><span class="lang">javascript</span><span class="fname">localStorage: sxsx.comments / sxsx.likes / sxsx.favs</span></div>
+    <pre><code><span class="cmt">// Comment（数组）</span>
+{ <span class="attr">id</span>, <span class="attr">resourceId</span>, <span class="attr">userId</span>, <span class="attr">content</span>: <span class="str">'排版很清晰～'</span>, <span class="attr">createdAt</span> }
+
+<span class="cmt">// Likes（对象：resourceId → userId[]）</span>
+{ <span class="str">'r_1'</span>: [<span class="str">'u_ming'</span>, <span class="str">'u_demo'</span>], <span class="str">'r_3'</span>: [<span class="str">'u_lulu'</span>] }
+
+<span class="cmt">// Favs（对象：userId → resourceId[]）</span>
+{ <span class="str">'u_demo'</span>: [<span class="str">'r_1'</span>, <span class="str">'r_3'</span>] }</code></pre>
+  </div>
+
+  <h3 class="sub-title">Dict — 字典（专业/领域）</h3>
+  <div class="code-wrap">
+    <div class="code-header"><span class="lang">javascript</span><span class="fname">localStorage: sxsx.majors / sxsx.fields</span></div>
+    <pre><code><span class="cmt">// Majors（字符串数组，用户可追加）</span>
+[<span class="str">'新闻学'</span>, <span class="str">'传播学'</span>, <span class="str">'法学'</span>, <span class="str">'计算机科学与技术'</span>, ..., <span class="str">'其他'</span>]
+
+<span class="cmt">// Fields（对象数组，用户可追加）</span>
+[
+  { <span class="attr">id</span>: <span class="str">'kaoyan'</span>,  <span class="attr">name</span>: <span class="str">'考研'</span>,  <span class="attr">icon</span>: <span class="str">'🎓'</span> },
+  { <span class="attr">id</span>: <span class="str">'jiaozi'</span>,  <span class="attr">name</span>: <span class="str">'教资'</span>,  <span class="attr">icon</span>: <span class="str">'👩‍🏫'</span> },
+  { <span class="attr">id</span>: <span class="str">'cet'</span>,     <span class="attr">name</span>: <span class="str">'四六级'</span>, <span class="attr">icon</span>: <span class="str">'🅰️'</span> },
+  ...
+]</code></pre>
+  </div>
+</div>
+
+<!-- ====== 六、index.html 源码 ====== -->
+<div class="section" id="html">
+  <h2 class="section-title"><span class="icon">📄</span>六、index.html 完整源码</h2>
+
+  <h3 class="sub-title" id="html-head">6.1 头部 & 外部依赖</h3>
+  <p>引入 Tailwind CSS（CDN）、PDF.js、mammoth.js，并配置 Tailwind 主题色 <code>brand</code>（深蓝）。</p>
+  <div class="code-wrap">
+    <div class="code-header"><span class="lang">html</span><span class="fname">index.html · 第 1–70 行</span></div>
+    <pre><code><span class="cls">&lt;!DOCTYPE html&gt;</span>
+<span class="cls">&lt;html</span> <span class="attr">lang</span>=<span class="str">"zh-CN"</span><span class="cls">&gt;</span>
+<span class="cls">&lt;head&gt;</span>
+  <span class="cls">&lt;meta</span> <span class="attr">charset</span>=<span class="str">"UTF-8"</span> <span class="cls">/&gt;</span>
+  <span class="cls">&lt;meta</span> <span class="attr">name</span>=<span class="str">"viewport"</span> <span class="attr">content</span>=<span class="str">"width=device-width, initial-scale=1.0"</span> <span class="cls">/&gt;</span>
+  <span class="cls">&lt;title&gt;</span>随心资料分享库 · Web 小程序<span class="cls">&lt;/title&gt;</span>
+
+  <span class="cmt">&lt;!-- Tailwind CSS（CDN，便于单文件演示） --&gt;</span>
+  <span class="cls">&lt;script</span> <span class="attr">src</span>=<span class="str">"https://cdn.tailwindcss.com"</span><span class="cls">&gt;&lt;/script&gt;</span>
+  <span class="cmt">&lt;!-- PDF.js，用于在浏览器里渲染 PDF 缩略图与预览 --&gt;</span>
+  <span class="cls">&lt;script</span> <span class="attr">src</span>=<span class="str">"https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"</span><span class="cls">&gt;&lt;/script&gt;</span>
+  <span class="cls">&lt;script&gt;</span>
+    <span class="kw">if</span> (window[<span class="str">'pdfjsLib'</span>]) {
+      window[<span class="str">'pdfjsLib'</span>].GlobalWorkerOptions.workerSrc =
+        <span class="str">'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'</span>;
+    }
+  <span class="cls">&lt;/script&gt;</span>
+  <span class="cmt">&lt;!-- mammoth.js，用于在浏览器里把 .docx 渲染为 HTML 预览 --&gt;</span>
+  <span class="cls">&lt;script</span> <span class="attr">src</span>=<span class="str">"https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"</span><span class="cls">&gt;&lt;/script&gt;</span>
+
+  <span class="cls">&lt;script&gt;</span>
+    <span class="cmt">// Tailwind 自定义主题：brand 深蓝配色</span>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              <span class="num">500</span>: <span class="str">'#2c5f8a'</span>,  <span class="cmt">// 主色</span>
+              <span class="num">600</span>: <span class="str">'#1f4a6e'</span>,  <span class="cmt">// hover</span>
+              <span class="num">700</span>: <span class="str">'#163854'</span>   <span class="cmt">// dark</span>
+            }
+          }
+        }
+      }
+    };
+  <span class="cls">&lt;/script&gt;</span>
+<span class="cls">&lt;/head&gt;</span></code></pre>
+  </div>
+
+  <h3 class="sub-title" id="html-nav">6.2 顶部导航 & 移动端底部 Tab</h3>
+  <div class="code-wrap">
+    <div class="code-header"><span class="lang">html</span><span class="fname">index.html · 顶部 header（第 73–91 行）</span></div>
+    <pre><code><span class="cmt">&lt;!-- 顶部导航 --&gt;</span>
+<span class="cls">&lt;header</span> <span class="attr">class</span>=<span class="str">"bg-white border-b border-slate-200 sticky top-0 z-40"</span><span class="cls">&gt;</span>
+  <span class="cls">&lt;div</span> <span class="attr">class</span>=<span class="str">"max-w-6xl mx-auto px-4 h-14 flex items-center justify-between"</span><span class="cls">&gt;</span>
+    <span class="cmt">&lt;!-- Logo --&gt;</span>
+    <span class="cls">&lt;div</span> <span class="attr">class</span>=<span class="str">"flex items-center gap-2 cursor-pointer"</span> <span class="attr">onclick</span>=<span class="str">"App.go('home')"</span><span class="cls">&gt;</span>
+      <span class="cls">&lt;div</span> <span class="attr">class</span>=<span class="str">"w-8 h-8 rounded-lg bg-brand-500 text-white flex items-center justify-center font-bold"</span><span class="cls">&gt;</span>心<span class="cls">&lt;/div&gt;</span>
+      <span class="cls">&lt;div&gt;</span>
+        <span class="cls">&lt;div</span> <span class="attr">class</span>=<span class="str">"font-bold text-brand-700"</span><span class="cls">&gt;</span>随心资料分享库<span class="cls">&lt;/div&gt;</span>
+        <span class="cls">&lt;div</span> <span class="attr">class</span>=<span class="str">"text-[10px] text-slate-400"</span><span class="cls">&gt;</span>啥都赢小组 · 实践作品<span class="cls">&lt;/div&gt;</span>
+      <span class="cls">&lt;/div&gt;</span>
+    <span class="cls">&lt;/div&gt;</span>
+    <span class="cmt">&lt;!-- 桌面导航按钮 --&gt;</span>
+    <span class="cls">&lt;nav</span> <span class="attr">class</span>=<span class="str">"hidden md:flex items-center gap-1"</span> <span class="attr">id</span>=<span class="str">"topNav"</span><span class="cls">&gt;</span>
+      <span class="cls">&lt;button</span> <span class="attr">data-view</span>=<span class="str">"home"</span>    <span class="attr">class</span>=<span class="str">"nav-item ..."</span><span class="cls">&gt;</span>首页<span class="cls">&lt;/button&gt;</span>
+      <span class="cls">&lt;button</span> <span class="attr">data-view</span>=<span class="str">"library"</span> <span class="attr">class</span>=<span class="str">"nav-item ..."</span><span class="cls">&gt;</span>资料库<span class="cls">&lt;/button&gt;</span>
+      <span class="cls">&lt;button</span> <span class="attr">data-view</span>=<span class="str">"feed"</span>    <span class="attr">class</span>=<span class="str">"nav-item ..."</span><span class="cls">&gt;</span>投喂资料<span class="cls">&lt;/button&gt;</span>
+      <span class="cls">&lt;button</span> <span class="attr">data-view</span>=<span class="str">"upload"</span>  <span class="attr">class</span>=<span class="str">"nav-item ..."</span><span class="cls">&gt;</span>上传<span class="cls">&lt;/button&gt;</span>
+    <span class="cls">&lt;/nav&gt;</span>
+    <span class="cmt">&lt;!-- 用户区（由 JS 动态填充） --&gt;</span>
+    <span class="cls">&lt;div</span> <span class="attr">id</span>=<span class="str">"userArea"</span><span class="cls">&gt;&lt;/div&gt;</span>
+  <span class="cls">&lt;/div&gt;</span>
+<span class="cls">&lt;/header&gt;</span>
+
+<span class="cmt">&lt;!-- 移动端底部 Tab 栏（md 以上隐藏） --&gt;</span>
+<span class="cls">&lt;nav</span> <span class="attr">class</span>=<span class="str">"md:hidden fixed bottom-0 inset-x-0 bg-white border-t z-40"</span><span class="cls">&gt;</span>
+  <span class="cls">&lt;div</span> <span class="attr">class</span>=<span class="str">"grid grid-cols-4"</span><span class="cls">&gt;</span>
+    <span class="cmt">&lt;!-- 首页 / 资料库 / 投喂 / 上传 --&gt;</span>
+  <span class="cls">&lt;/div&gt;</span>
+<span class="cls">&lt;/nav&gt;</span></code></pre>
+  </div>
+
+  <h3 class="sub-title" id="html-views">6.3 六个视图</h3>
+  <table>
+    <thead><tr><th>视图 ID</th><th>对应 Hash</th><th>主要内容</th></tr></thead>
+    <tbody>
+      <tr><td><code>view-home</code></td><td><code>#</code>（首页）</td><td>Hero Banner + 统计卡片 + 三大模块 + 最新资料</td></tr>
+      <tr><td><code>view-library</code></td><td><code>#/library</code></td><td>搜索框 + 排序 + 专业/领域双排筛选 + 资料卡片网格</td></tr>
+      <tr><td><code>view-detail</code></td><td><code>#/r/{id}</code></td><td>在线预览 + 下载 + 资料信息 + 点赞/收藏 + 评论</td></tr>
+      <tr><td><code>view-upload</code></td><td><code>#/upload</code></td><td>文件拖拽上传表单（登录后可用）</td></tr>
+      <tr><td><code>view-profile</code></td><td><code>#/me</code></td><td>个人头像/统计 + 我的上传/收藏/评论</td></tr>
+      <tr><td><code>view-feed</code></td><td><code>#/feed</code></td><td>3 种投喂方式 + 最近投喂记录</td></tr>
+    </tbody>
+  </table>
+  <div class="info-box info">
+    <span class="ico">ℹ️</span>
+    <div>所有视图都是 <code>&lt;section&gt;</code> 标签，CSS 默认 <code>display:none</code>，
+    切换时给活跃视图加 <code>.active</code> 类（<code>display:block</code>）即可，动画由 <code>.fade-in</code> 提供。</div>
+  </div>
+
+  <h3 class="sub-title" id="html-modal">6.4 登录/注册弹窗</h3>
+  <div class="code-wrap">
+    <div class="code-header"><span class="lang">html</span><span class="fname">index.html · 登录/注册弹窗（第 382–415 行）</span></div>
+    <pre><code><span class="cmt">&lt;!-- 覆盖整个屏幕的半透明遮罩 --&gt;</span>
+<span class="cls">&lt;div</span> <span class="attr">id</span>=<span class="str">"authModal"</span> <span class="attr">class</span>=<span class="str">"hidden fixed inset-0 z-50 bg-black/40 flex items-center justify-center"</span><span class="cls">&gt;</span>
+  <span class="cls">&lt;div</span> <span class="attr">class</span>=<span class="str">"bg-white rounded-xl w-full max-w-sm p-6 fade-in"</span><span class="cls">&gt;</span>
+    <span class="cmt">&lt;!-- 标题（JS 动态切换"登录"/"注册"） --&gt;</span>
+    <span class="cls">&lt;h3</span> <span class="attr">id</span>=<span class="str">"authTitle"</span><span class="cls">&gt;</span>登录<span class="cls">&lt;/h3&gt;</span>
+    <span class="cls">&lt;form</span> <span class="attr">id</span>=<span class="str">"authForm"</span><span class="cls">&gt;</span>
+      <span class="cmt">&lt;!-- 注册时才显示的昵称字段 --&gt;</span>
+      <span class="cls">&lt;div</span> <span class="attr">id</span>=<span class="str">"authNameWrap"</span> <span class="attr">class</span>=<span class="str">"hidden"</span><span class="cls">&gt;</span>...<span class="cls">&lt;/div&gt;</span>
+      <span class="cmt">&lt;!-- 账号 / 密码 --&gt;</span>
+      <span class="cls">&lt;input</span> <span class="attr">name</span>=<span class="str">"account"</span> <span class="attr">placeholder</span>=<span class="str">"学号 / 账号"</span> <span class="cls">/&gt;</span>
+      <span class="cls">&lt;input</span> <span class="attr">name</span>=<span class="str">"password"</span> <span class="attr">type</span>=<span class="str">"password"</span> <span class="cls">/&gt;</span>
+      <span class="cls">&lt;button</span> <span class="attr">type</span>=<span class="str">"submit"</span><span class="cls">&gt;</span>登录<span class="cls">&lt;/button&gt;</span>
+    <span class="cls">&lt;/form&gt;</span>
+    <span class="cmt">&lt;!-- 切换登录/注册 --&gt;</span>
+    <span class="cls">&lt;a</span> <span class="attr">id</span>=<span class="str">"authToggle"</span><span class="cls">&gt;</span>立即注册<span class="cls">&lt;/a&gt;</span>
+    <span class="cmt">&lt;!-- 体验账号一键登录 --&gt;</span>
+    <span class="cls">&lt;button</span> <span class="attr">onclick</span>=<span class="str">"Auth.demoLogin()"</span><span class="cls">&gt;</span>以体验账号登录 →<span class="cls">&lt;/button&gt;</span>
+  <span class="cls">&lt;/div&gt;</span>
+<span class="cls">&lt;/div&gt;</span></code></pre>
+  </div>
+</div>
+
+<!-- ====== 七、app.js 源码 ====== -->
+<div class="section" id="js">
+  <h2 class="section-title"><span class="icon">⚙️</span>七、app.js 完整源码</h2>
+  <p>全部代码包裹在 IIFE（立即执行函数）中，避免污染全局命名空间；
+  最后通过 <code>window.App = App; window.Auth = Auth;</code> 暴露必要接口供 HTML 的 <code>onclick</code> 使用。</p>
+
+  <h3 class="sub-title" id="js-storage">7.1 存储层 & 工具函数</h3>
+  <div class="code-wrap">
+    <div class="code-header"><span class="lang">javascript</span><span class="fname">app.js · 第 1–50 行</span></div>
+    <pre><code><span class="kw">const</span> LS = {
+  USERS:    <span class="str">'sxsx.users'</span>,
+  SESSION:  <span class="str">'sxsx.session'</span>,
+  RESOURCES:<span class="str">'sxsx.resources'</span>,
+  COMMENTS: <span class="str">'sxsx.comments'</span>,
+  LIKES:    <span class="str">'sxsx.likes'</span>,    <span class="cmt">// { resourceId: [userId,...] }</span>
+  FAVS:     <span class="str">'sxsx.favs'</span>,     <span class="cmt">// { userId: [resourceId,...] }</span>
+  MAJORS:   <span class="str">'sxsx.majors'</span>,   <span class="cmt">// 专业字典</span>
+  FIELDS:   <span class="str">'sxsx.fields'</span>,   <span class="cmt">// 领域字典</span>
+  SEEDED:   <span class="str">'sxsx.seeded.v3'</span> <span class="cmt">// 示例数据版本标记</span>
+};
+
+<span class="cmt">// localStorage 读取（自动 JSON.parse，异常时返回默认值）</span>
+<span class="kw">const</span> <span class="fn">get</span> = (k, def) =&gt; { <span class="kw">try</span> { <span class="kw">return</span> JSON.parse(localStorage.getItem(k)) ?? def; } <span class="kw">catch</span> { <span class="kw">return</span> def; } };
+<span class="kw">const</span> <span class="fn">set</span> = (k, v) =&gt; localStorage.setItem(k, JSON.stringify(v));
+
+<span class="cmt">// 工具函数</span>
+<span class="kw">const</span> <span class="fn">uid</span>       = () =&gt; Math.random().toString(<span class="num">36</span>).slice(<span class="num">2</span>, <span class="num">10</span>) + Date.now().toString(<span class="num">36</span>).slice(-<span class="num">4</span>);
+<span class="kw">const</span> <span class="fn">$</span>         = sel =&gt; document.querySelector(sel);
+<span class="kw">const</span> <span class="fn">$$</span>        = sel =&gt; document.querySelectorAll(sel);
+<span class="kw">const</span> <span class="fn">escapeHtml</span> = s =&gt; String(s ?? <span class="str">''</span>).replace(<span class="str">/[&lt;&gt;"'&amp;]/g</span>, c =&gt; ({<span class="str">'&amp;'</span>:<span class="str">'&amp;amp;'</span>,<span class="str">'&lt;'</span>:<span class="str">'&amp;lt;'</span>,...}[c]));
+
+<span class="kw">const</span> <span class="fn">fmtTime</span> = ts =&gt; {
+  <span class="kw">const</span> diff = (Date.now() - ts) / <span class="num">1000</span>;
+  <span class="kw">if</span> (diff &lt; <span class="num">60</span>)    <span class="kw">return</span> <span class="str">'刚刚'</span>;
+  <span class="kw">if</span> (diff &lt; <span class="num">3600</span>)  <span class="kw">return</span> Math.floor(diff / <span class="num">60</span>) + <span class="str">' 分钟前'</span>;
+  <span class="kw">if</span> (diff &lt; <span class="num">86400</span>) <span class="kw">return</span> Math.floor(diff / <span class="num">3600</span>) + <span class="str">' 小时前'</span>;
+  <span class="kw">return</span> <span class="kw">new</span> Date(ts).toLocaleDateString(<span class="str">'zh-CN'</span>);
+};
+<span class="kw">const</span> <span class="fn">fmtSize</span> = b =&gt; b &lt; <span class="num">1024</span> ? b + <span class="str">' B'</span> : b &lt; <span class="num">1048576</span> ? (b/<span class="num">1024</span>).toFixed(<span class="num">1</span>) + <span class="str">' KB'</span> : (b/<span class="num">1048576</span>).toFixed(<span class="num">2</span>) + <span class="str">' MB'</span>;
+<span class="kw">const</span> <span class="fn">toast</span>   = msg =&gt; { <span class="cmt">/* 浮现提示，1.8s 后消失 */</span> };</code></pre>
+  </div>
+
+  <h3 class="sub-title" id="js-dict">7.2 字典模块（Dict）</h3>
+  <p>负责管理专业/领域字典，支持动态扩展。新专业/领域一旦添加会持久化到 localStorage。</p>
+  <div class="code-wrap">
+    <div class="code-header"><span class="lang">javascript</span><span class="fname">app.js · 第 52–89 行</span></div>
+    <pre><code><span class="kw">const</span> DEFAULT_MAJORS = [<span class="str">'新闻学'</span>, <span class="str">'传播学'</span>, <span class="str">'汉语言文学'</span>, <span class="str">'法学'</span>, <span class="str">'计算机科学与技术'</span>, ...];
+<span class="kw">const</span> DEFAULT_FIELDS = [
+  { <span class="attr">id</span>: <span class="str">'kaoyan'</span>,  <span class="attr">name</span>: <span class="str">'考研'</span>,   <span class="attr">icon</span>: <span class="str">'🎓'</span> },
+  { <span class="attr">id</span>: <span class="str">'jiaozi'</span>,  <span class="attr">name</span>: <span class="str">'教资'</span>,   <span class="attr">icon</span>: <span class="str">'👩‍🏫'</span> },
+  { <span class="attr">id</span>: <span class="str">'cet'</span>,     <span class="attr">name</span>: <span class="str">'四六级'</span>, <span class="attr">icon</span>: <span class="str">'🅰️'</span> },
+  { <span class="attr">id</span>: <span class="str">'fakao'</span>,   <span class="attr">name</span>: <span class="str">'法考'</span>,   <span class="attr">icon</span>: <span class="str">'⚖️'</span> },
+  <span class="cmt">// ... 共 15 个</span>
+];
+
+<span class="kw">const</span> Dict = {
+  <span class="fn">majors</span>()  { <span class="kw">return</span> <span class="fn">get</span>(LS.MAJORS, DEFAULT_MAJORS.slice()); },
+  <span class="fn">fields</span>()  { <span class="kw">return</span> <span class="fn">get</span>(LS.FIELDS, DEFAULT_FIELDS.slice()); },
+  <span class="fn">addMajor</span>(name) { <span class="cmt">/* 如不存在则追加，返回名称 */</span> },
+  <span class="fn">addField</span>(name) { <span class="cmt">/* 如不存在则追加（自动生成 id + 🗂️ icon） */</span> },
+  <span class="fn">fieldIdByName</span>(name) { <span class="cmt">/* 支持按名称或 id 查找 */</span> },
+  <span class="fn">fieldNameById</span>(id)   { <span class="cmt">/* 返回完整 { id, name, icon } 对象 */</span> }
+};</code></pre>
+  </div>
+
+  <h3 class="sub-title" id="js-feed">7.3 投喂模块（Feed）</h3>
+  <p>通用入库工具：将任意来源的原始数据（JSON / 表格行 / 文件）标准化为 Resource 结构并写入 localStorage。</p>
+  <div class="code-wrap">
+    <div class="code-header"><span class="lang">javascript</span><span class="fname">app.js · 第 91–143 行</span></div>
+    <pre><code><span class="kw">const</span> Feed = {
+  <span class="cmt">/**
+   * 标准化一条原始记录
+   * 兼容中英文字段名：title/名称/name、major/专业、field/领域、type/类型、tags/标签
+   * 自动推断类型（jpg/png → image，word → docx）
+   */</span>
+  <span class="fn">normalizeOne</span>(raw) {
+    <span class="kw">if</span> (!raw || <span class="kw">typeof</span> raw !== <span class="str">'object'</span>) <span class="kw">return</span> <span class="kw">null</span>;
+    <span class="kw">const</span> title = (raw.title || raw.名称 || raw.name || <span class="str">''</span>).toString().trim();
+    <span class="kw">if</span> (!title) <span class="kw">return</span> <span class="kw">null</span>;
+    <span class="kw">const</span> major  = (raw.major || raw.专业 || <span class="str">'其他'</span>).toString().trim();
+    <span class="kw">const</span> m      = Dict.<span class="fn">addMajor</span>(major) || <span class="str">'其他'</span>;
+    <span class="kw">let</span> fInput   = (raw.field || raw.领域 || <span class="str">''</span>).toString().trim();
+    <span class="kw">let</span> fieldId  = Dict.<span class="fn">fieldIdByName</span>(fInput);
+    <span class="kw">if</span> (!fieldId) { Dict.<span class="fn">addField</span>(fInput || <span class="str">'其他'</span>); fieldId = Dict.<span class="fn">fieldIdByName</span>(fInput); }
+    <span class="kw">return</span> {
+      id: <span class="fn">uid</span>(), title, desc: raw.desc || <span class="str">''</span>,
+      major: m, field: fieldId,
+      type: <span class="cmt">/* 推断 */</span>,
+      thumb: <span class="fn">iconThumb</span>(type),
+      uploaderId: currentUser()?.id || <span class="str">'u_demo'</span>,
+      uploaderName: currentUser()?.name || <span class="str">'社区贡献'</span>,
+      createdAt: Date.now(), downloads: <span class="num">0</span>
+    };
+  },
+  <span class="fn">addOne</span>(raw)  { <span class="kw">const</span> r = <span class="kw">this</span>.<span class="fn">normalizeOne</span>(raw); <span class="kw">if</span> (r) Resource.<span class="fn">add</span>(r); <span class="kw">return</span> r; },
+  <span class="fn">addMany</span>(arr) { <span class="cmt">/* 批量处理，返回 { ok, fail, total } */</span> }
+};</code></pre>
+  </div>
+
+  <h3 class="sub-title" id="js-auth">7.4 鉴权模块（Auth）</h3>
+  <div class="code-wrap">
+    <div class="code-header"><span class="lang">javascript</span><span class="fname">app.js · 第 145–198 行</span></div>
+    <pre><code><span class="kw">const</span> Auth = {
+  mode: <span class="str">'login'</span>,
+  <span class="fn">open</span>(mode = <span class="str">'login'</span>) { <span class="cmt">/* 切换弹窗标题、字段显示 */</span> },
+  <span class="fn">close</span>()  { $(<span class="str">'#authModal'</span>).classList.add(<span class="str">'hidden'</span>); },
+  <span class="fn">toggle</span>() { <span class="kw">this</span>.<span class="fn">open</span>(<span class="kw">this</span>.mode === <span class="str">'login'</span> ? <span class="str">'register'</span> : <span class="str">'login'</span>); },
+  <span class="fn">demoLogin</span>() {
+    <span class="cmt">// 确保 demo 账号存在，然后写入 SESSION</span>
+    set(LS.SESSION, { userId: demo.id });
+    App.<span class="fn">renderUserArea</span>(); App.<span class="fn">reRender</span>();
+  },
+  <span class="fn">submit</span>(e) {
+    <span class="kw">const</span> { account, password } = Object.fromEntries(<span class="kw">new</span> FormData(e.target));
+    <span class="kw">if</span> (<span class="kw">this</span>.mode === <span class="str">'register'</span>) { <span class="cmt">/* 检查账号唯一性，写入 USERS */</span> }
+    <span class="kw">else</span> { <span class="cmt">/* 账号+密码匹配，写入 SESSION */</span> }
+  }
+};
+Auth.<span class="fn">logout</span> = <span class="kw">function</span> () {
+  localStorage.removeItem(LS.SESSION);
+  App.<span class="fn">go</span>(<span class="str">'home'</span>);
+};</code></pre>
+  </div>
+
+  <h3 class="sub-title" id="js-resource">7.5 数据访问层</h3>
+  <div class="code-wrap">
+    <div class="code-header"><span class="lang">javascript</span><span class="fname">app.js · 第 207–261 行</span></div>
+    <pre><code><span class="kw">const</span> Resource = {
+  <span class="fn">all</span>()     { <span class="kw">return</span> <span class="fn">get</span>(LS.RESOURCES, []).sort((a,b) =&gt; b.createdAt - a.createdAt); },
+  <span class="fn">byId</span>(id)  { <span class="kw">return</span> <span class="kw">this</span>.<span class="fn">all</span>().find(r =&gt; r.id === id); },
+  <span class="fn">byUser</span>(uid){ <span class="kw">return</span> <span class="kw">this</span>.<span class="fn">all</span>().filter(r =&gt; r.uploaderId === uid); },
+  <span class="fn">add</span>(r)    { <span class="kw">const</span> list = <span class="fn">get</span>(LS.RESOURCES, []); list.unshift(r); <span class="fn">set</span>(LS.RESOURCES, list); },
+  <span class="fn">remove</span>(id) { <span class="cmt">/* 删资料，同时清理评论和点赞 */</span> },
+  <span class="fn">incDownload</span>(id) { <span class="cmt">/* 下载数 +1 */</span> }
+};
+
+<span class="kw">const</span> Comment = {
+  <span class="fn">byResource</span>(rid) { <span class="kw">return</span> <span class="fn">get</span>(LS.COMMENTS, []).filter(c =&gt; c.resourceId === rid); },
+  <span class="fn">add</span>(c) { <span class="kw">const</span> list = <span class="fn">get</span>(LS.COMMENTS, []); list.push(c); <span class="fn">set</span>(LS.COMMENTS, list); }
+};
+
+<span class="kw">const</span> Like = {
+  <span class="fn">isLiked</span>(rid, uid) { <span class="kw">return</span> (<span class="fn">get</span>(LS.LIKES, {})[rid] || []).includes(uid); },
+  <span class="fn">count</span>(rid)        { <span class="kw">return</span> (<span class="fn">get</span>(LS.LIKES, {})[rid] || []).length; },
+  <span class="fn">toggle</span>(rid, uid)  { <span class="cmt">/* 切换点赞状态，返回 true=已点赞 */</span> }
+};
+
+<span class="kw">const</span> Fav = {
+  <span class="fn">list</span>(uid)       { <span class="kw">return</span> (<span class="fn">get</span>(LS.FAVS, {})[uid] || []); },
+  <span class="fn">has</span>(rid, uid)   { <span class="kw">return</span> <span class="kw">this</span>.<span class="fn">list</span>(uid).includes(rid); },
+  <span class="fn">toggle</span>(rid, uid) { <span class="cmt">/* 切换收藏状态 */</span> }
+};</code></pre>
+  </div>
+
+  <h3 class="sub-title" id="js-thumb">7.6 缩略图生成</h3>
+  <p>三种情况：图片直接缩放到 320×220 Canvas；PDF 用 PDF.js 渲染第一页；Word 和其他类型用彩色文字图标代替。</p>
+  <div class="code-wrap">
+    <div class="code-header"><span class="lang">javascript</span><span class="fname">app.js · 第 275–332 行</span></div>
+    <pre><code><span class="kw">async function</span> <span class="fn">makeThumbnail</span>(file) {
+  <span class="kw">const</span> type = (file.type || <span class="str">''</span>).toLowerCase();
+  <span class="kw">const</span> name = file.name.toLowerCase();
+
+  <span class="cmt">// 1. 图片 → Canvas 缩放</span>
+  <span class="kw">if</span> (type.startsWith(<span class="str">'image/'</span>)) {
+    <span class="kw">return await new</span> <span class="fn">Promise</span>(resolve =&gt; {
+      <span class="kw">const</span> img = <span class="kw">new</span> Image();
+      img.onload = () =&gt; {
+        <span class="kw">const</span> c = document.createElement(<span class="str">'canvas'</span>);
+        c.width = <span class="num">320</span>; c.height = <span class="num">220</span>;
+        <span class="kw">const</span> ratio = Math.min(<span class="num">320</span> / img.width, <span class="num">220</span> / img.height);
+        c.getContext(<span class="str">'2d'</span>).drawImage(img, (<span class="num">320</span> - img.width*ratio)/<span class="num">2</span>, ...);
+        resolve(c.toDataURL(<span class="str">'image/jpeg'</span>, <span class="num">0.8</span>));
+      };
+    });
+  }
+
+  <span class="cmt">// 2. PDF → PDF.js 渲染第一页</span>
+  <span class="kw">if</span> (name.endsWith(<span class="str">'.pdf'</span>)) {
+    <span class="kw">const</span> buf = <span class="kw">await</span> file.arrayBuffer();
+    <span class="kw">const</span> pdf = <span class="kw">await</span> pdfjsLib.getDocument({ data: buf }).promise;
+    <span class="kw">const</span> page = <span class="kw">await</span> pdf.getPage(<span class="num">1</span>);
+    <span class="kw">const</span> canvas = document.createElement(<span class="str">'canvas'</span>);
+    canvas.width = <span class="num">320</span>; canvas.height = <span class="num">220</span>;
+    <span class="kw">await</span> page.render({ canvasContext: canvas.getContext(<span class="str">'2d'</span>), viewport: ... }).promise;
+    <span class="kw">return</span> canvas.toDataURL(<span class="str">'image/jpeg'</span>, <span class="num">0.8</span>);
+  }
+
+  <span class="cmt">// 3. Word / 其他 → 彩色文字图标</span>
+  <span class="kw">return</span> <span class="fn">iconThumb</span>(name.endsWith(<span class="str">'.docx'</span>) ? <span class="str">'docx'</span> : <span class="str">'file'</span>);
+}
+
+<span class="cmt">// 生成纯色文字缩略图（PDF=红 / DOCX=蓝 / IMG=绿 / FILE=灰）</span>
+<span class="kw">function</span> <span class="fn">iconThumb</span>(kind) {
+  <span class="kw">const</span> color = { pdf: <span class="str">'#dc2626'</span>, docx: <span class="str">'#2563eb'</span>, image: <span class="str">'#059669'</span>, file: <span class="str">'#64748b'</span> }[kind];
+  <span class="kw">const</span> c = document.createElement(<span class="str">'canvas'</span>);
+  c.width = <span class="num">320</span>; c.height = <span class="num">220</span>;
+  <span class="kw">const</span> ctx = c.getContext(<span class="str">'2d'</span>);
+  ctx.fillStyle = <span class="str">'#f8fafc'</span>; ctx.fillRect(<span class="num">0</span>, <span class="num">0</span>, <span class="num">320</span>, <span class="num">220</span>);
+  ctx.fillStyle = color; ctx.font = <span class="str">'bold 56px sans-serif'</span>;
+  ctx.fillText(label, <span class="num">160</span>, <span class="num">110</span>);
+  <span class="kw">return</span> c.toDataURL(<span class="str">'image/jpeg'</span>, <span class="num">0.8</span>);
+}</code></pre>
+  </div>
+
+  <h3 class="sub-title" id="js-app">7.7 App 主对象（路由 & 渲染）</h3>
+  <p>App 是整个前端逻辑的核心，负责状态管理、路由切换、各视图的渲染和事件绑定。</p>
+  <div class="code-wrap">
+    <div class="code-header"><span class="lang">javascript</span><span class="fname">app.js · 第 402–1138 行（关键片段）</span></div>
+    <pre><code><span class="kw">const</span> App = {
+  state: { view: <span class="str">'home'</span>, major: <span class="str">'全部'</span>, field: <span class="str">'all'</span>, keyword: <span class="str">''</span>, sort: <span class="str">'latest'</span> },
+
+  <span class="fn">init</span>() {
+    <span class="fn">seedIfNeeded</span>();  <span class="cmt">// 首次运行注入 16 份示例数据</span>
+    <span class="kw">this</span>.<span class="fn">bindNav</span>(); <span class="kw">this</span>.<span class="fn">bindSearch</span>(); <span class="kw">this</span>.<span class="fn">bindUpload</span>();
+    <span class="kw">this</span>.<span class="fn">bindAuth</span>(); <span class="kw">this</span>.<span class="fn">bindFeed</span>(); <span class="kw">this</span>.<span class="fn">bindHashRoute</span>();
+    <span class="kw">this</span>.<span class="fn">renderUserArea</span>(); <span class="kw">this</span>.<span class="fn">renderHome</span>();
+  },
+
+  <span class="cmt">// 路由切换：激活对应视图 section，更新 URL Hash，调用 reRender</span>
+  <span class="fn">go</span>(view, params) { ... },
+
+  <span class="cmt">// 哈希路由解析：#/r/{id} | #/library | #/me | #/upload | #/feed</span>
+  <span class="fn">handleHash</span>() { ... },
+
+  <span class="cmt">// 资料库：双维度筛选（专业 × 领域）+ 关键词 + 排序</span>
+  <span class="fn">renderLibrary</span>() {
+    <span class="kw">let</span> list = Resource.<span class="fn">all</span>();
+    <span class="kw">if</span> (state.major !== <span class="str">'全部'</span>) list = list.filter(r =&gt; r.major === state.major);
+    <span class="kw">if</span> (state.field !== <span class="str">'all'</span>)   list = list.filter(r =&gt; r.field === state.field);
+    <span class="kw">if</span> (state.keyword) list = list.filter(r =&gt; title+desc+tags 包含 keyword);
+    <span class="cmt">// 排序 → 渲染卡片</span>
+  },
+
+  <span class="cmt">// 详情页：在线预览 + 事件绑定（点赞/收藏/下载/评论/删除）</span>
+  <span class="fn">renderDetail</span>(id) { ... },
+
+  <span class="cmt">// 上传：拖拽区、文件读取、缩略图生成、写入 Resource</span>
+  <span class="fn">bindUpload</span>() { ... },
+
+  <span class="cmt">// 个人中心：统计 + 三个 Tab（我的上传/收藏/评论）</span>
+  <span class="fn">renderProfile</span>() { ... },
+
+  <span class="cmt">// 投喂页：JSON 批量入库 / 填表投喂 / 文件批量拖入</span>
+  <span class="fn">bindFeed</span>()  { ... },
+  <span class="fn">renderFeed</span>() { ... },
+
+  <span class="cmt">// 根据当前视图调用对应 render 方法</span>
+  <span class="fn">reRender</span>() { ... }
+};</code></pre>
+  </div>
+</div>
+
+<!-- ====== 八、README 摘要 ====== -->
+<div class="section" id="readme">
+  <h2 class="section-title"><span class="icon">📖</span>八、README 摘要</h2>
+  <p>完整 README 见 <code>site/README.md</code>（378 行），以下为关键信息摘录：</p>
+
+  <h3 class="sub-title">启动方式</h3>
+  <div class="code-wrap">
+    <div class="code-header"><span class="lang">bash</span><span class="fname">终端</span></div>
+    <pre><code><span class="cmt"># 方式一：双击打开（最快）</span>
+<span class="fn">双击</span> site/index.html
+
+<span class="cmt"># 方式二：Python 静态服务（推荐）</span>
+<span class="fn">cd</span> site
+python -m http.server 8765
+<span class="cmt"># 访问 http://localhost:8765/</span>
+
+<span class="cmt"># 方式三：Node.js</span>
+npx http-server -p 8765</code></pre>
+  </div>
+
+  <h3 class="sub-title">体验账号</h3>
+  <table>
+    <thead><tr><th>账号</th><th>密码</th><th>说明</th></tr></thead>
+    <tbody>
+      <tr><td><code>demo</code></td><td><code>demo</code></td><td>体验账号（一键登录按钮自动填入）</td></tr>
+      <tr><td><code>lulu</code></td><td><code>1234</code></td><td>噜噜学姐（16 份示例资料的上传者之一）</td></tr>
+      <tr><td><code>ming</code></td><td><code>1234</code></td><td>小明同学（考研材料的上传者之一）</td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="sub-title">投喂资料 JSON 示例</h3>
+  <div class="code-wrap">
+    <div class="code-header"><span class="lang">json</span><span class="fname">投喂 · 粘贴到「投喂资料」页 → 方式 1 文本框</span></div>
+    <pre><code>[
+  {
+    <span class="attr">"title"</span>: <span class="str">"考研英语·高频词 800"</span>,
+    <span class="attr">"major"</span>: <span class="str">"英语"</span>,
+    <span class="attr">"field"</span>: <span class="str">"kaoyan"</span>,
+    <span class="attr">"type"</span>:  <span class="str">"pdf"</span>,
+    <span class="attr">"size"</span>:  <span class="num">320000</span>,
+    <span class="attr">"desc"</span>:  <span class="str">"近 5 年真题词频统计，按话题分类"</span>,
+    <span class="attr">"tags"</span>:  [<span class="str">"考研"</span>, <span class="str">"词汇"</span>]
+  },
+  {
+    <span class="attr">"title"</span>: <span class="str">"2025 教资·中学教育知识与能力真题"</span>,
+    <span class="attr">"major"</span>: <span class="str">"教育学"</span>,
+    <span class="attr">"field"</span>: <span class="str">"jiaozi"</span>,
+    <span class="attr">"type"</span>:  <span class="str">"pdf"</span>,
+    <span class="attr">"size"</span>:  <span class="num">1520000</span>,
+    <span class="attr">"tags"</span>:  [<span class="str">"教资"</span>, <span class="str">"真题"</span>, <span class="str">"中学"</span>]
+  }
+]</code></pre>
+  </div>
+</div>
+
+<!-- ====== 九、附录 ====== -->
+<div class="section" id="appendix">
+  <h2 class="section-title"><span class="icon">📎</span>九、附录</h2>
+
+  <h3 class="sub-title">领域 ID 对照表</h3>
+  <table>
+    <thead><tr><th>ID</th><th>名称</th><th>Emoji</th><th>适用场景</th></tr></thead>
+    <tbody>
+      <tr><td>period</td><td>专业课</td><td>📘</td><td>日常课程学习资料</td></tr>
+      <tr><td>exam</td><td>期末复习</td><td>📝</td><td>期末考试复习资料</td></tr>
+      <tr><td>kaoyan</td><td>考研</td><td>🎓</td><td>研究生入学考试</td></tr>
+      <tr><td>jiaozi</td><td>教资</td><td>👩‍🏫</td><td>教师资格考试</td></tr>
+      <tr><td>cet</td><td>四六级</td><td>🅰️</td><td>CET-4 / CET-6</td></tr>
+      <tr><td>fakao</td><td>法考</td><td>⚖️</td><td>法律职业资格考试</td></tr>
+      <tr><td>cpa</td><td>CPA</td><td>💼</td><td>注册会计师考试</td></tr>
+      <tr><td>gwy</td><td>公务员考试</td><td>🏛️</td><td>国考 / 省考</td></tr>
+      <tr><td>teacher</td><td>教师招聘</td><td>🏫</td><td>编制教师岗位考试</td></tr>
+      <tr><td>ielts</td><td>雅思</td><td>🌍</td><td>IELTS</td></tr>
+      <tr><td>toefl</td><td>托福</td><td>🛫</td><td>TOEFL</td></tr>
+      <tr><td>gmat</td><td>GMAT</td><td>📊</td><td>商学院入学考试</td></tr>
+      <tr><td>postgrad</td><td>保研</td><td>🏆</td><td>免试推荐研究生</td></tr>
+      <tr><td>other</td><td>其他</td><td>📦</td><td>其他类别</td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="sub-title">后续扩展路线图</h3>
+  <table>
+    <thead><tr><th>阶段</th><th>方向</th><th>关键技术</th></tr></thead>
+    <tbody>
+      <tr><td>实践二</td><td>接入真实后端</td><td>Node.js (Express) / Python (FastAPI) + MySQL</td></tr>
+      <tr><td>实践二</td><td>文件对象存储</td><td>腾讯云 COS / 阿里云 OSS + 文件 URL 存数据库</td></tr>
+      <tr><td>实践二</td><td>用户体系增强</td><td>JWT 鉴权 + 关注关系 + 头像上传</td></tr>
+      <tr><td>实践三</td><td>PDF 全文检索</td><td>PDF.js 提取文本 + Meilisearch / Elasticsearch</td></tr>
+      <tr><td>实践三</td><td>AI 辅助打标</td><td>大模型 API 识别资料内容 → 自动推荐专业/领域/标签</td></tr>
+      <tr><td>实践三</td><td>内容治理</td><td>管理员审核 + 举报 + 付费会员机制</td></tr>
+    </tbody>
+  </table>
+
+  <hr class="divider"/>
+  <p style="text-align:center; color: var(--slate-400); font-size: 13px;">
+    随心资料分享库 · 啥都赢小组 · 24级新闻学3班 · 2026<br/>
+    非迪 / 唐努尔 / 吕莹莹 · Web 前端开发技术 · 实践报告（一）
+  </p>
+</div>
+
+</div><!-- end .main -->
+
+<script>
+// 侧边栏滚动高亮
+(function () {
+  const links = document.querySelectorAll('.sidebar a[href^="#"]');
+  const sections = Array.from(links).map(a => document.querySelector(a.getAttribute('href'))).filter(Boolean);
+  function onScroll() {
+    let cur = sections[0];
+    sections.forEach(s => { if (window.scrollY + 100 >= s.offsetTop) cur = s; });
+    links.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + cur.id));
+  }
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+})();
+</script>
+</body>
+</html>

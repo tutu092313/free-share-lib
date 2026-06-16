@@ -17,74 +17,278 @@
   </script>
   <!-- mammoth.js，用于在浏览器里把 .docx 渲染为 HTML 预览 -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+  <!-- 数据集：官方权威资料 + 思维导图数据 -->
+  <script src="./assets/authoritative_resources.js"></script>
+  <script src="./assets/mindmap_data.js"></script>
   <script>
     tailwind.config = {
       theme: {
         extend: {
           colors: {
             brand: {
-              50:  '#eef5ff',
-              100: '#d9e8ff',
-              200: '#b6d2ff',
-              300: '#85b3ff',
-              400: '#528bff',
-              500: '#2c5f8a',
-              600: '#1f4a6e',
-              700: '#163854',
-              800: '#0e2538',
-              900: '#08151f'
+              50:  '#f5f3ff',
+              100: '#ede9fe',
+              200: '#ddd6fe',
+              300: '#c4b5fd',
+              400: '#a78bfa',
+              500: '#8b5cf6',
+              600: '#7c3aed',
+              700: '#6d28d9',
+              800: '#5b21b6',
+              900: '#4c1d95'
+            },
+            sunset: {
+              50:  '#fff7ed',
+              100: '#ffedd5',
+              200: '#fed7aa',
+              300: '#fdba74',
+              400: '#fb923c',
+              500: '#f97316',
+              600: '#ea580c'
+            },
+            ocean: {
+              50:  '#ecfeff',
+              100: '#cffafe',
+              200: '#a5f3fc',
+              300: '#67e8f9',
+              400: '#22d3ee',
+              500: '#06b6d4',
+              600: '#0891b2'
             }
           },
           fontFamily: {
-            sans: ['"PingFang SC"','"Microsoft YaHei"','"Helvetica Neue"','Arial','sans-serif']
+            sans: ['"PingFang SC"','"Microsoft YaHei"','"Helvetica Neue"','Arial','sans-serif'],
+            display: ['"PingFang SC"','"Microsoft YaHei"','system-ui','sans-serif']
+          },
+          animation: {
+            'gradient': 'gradient 8s ease infinite',
+            'float': 'float 6s ease-in-out infinite',
+            'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            'shimmer': 'shimmer 2.5s linear infinite',
+            'fade-in-up': 'fadeInUp .5s ease-out',
+            'scale-in': 'scaleIn .3s ease-out'
           }
         }
       }
     };
   </script>
   <style>
-    /* 让滚动条更细 */
+    /* === 基础 === */
     ::-webkit-scrollbar { width: 8px; height: 8px; }
-    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    ::-webkit-scrollbar-thumb { background: linear-gradient(180deg,#c4b5fd,#a78bfa); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: linear-gradient(180deg,#a78bfa,#8b5cf6); }
+
     .view { display: none; }
     .view.active { display: block; }
-    .nav-item.active { color: #2c5f8a; }
-    .nav-item.active svg { stroke: #2c5f8a; }
+    .nav-item.active { color: #7c3aed; }
+    .nav-item.active svg { stroke: #7c3aed; }
+    .nav-item.active::after {
+      content:''; position:absolute; left:50%; transform:translateX(-50%);
+      bottom:0; width:24px; height:2px; background:linear-gradient(90deg,#8b5cf6,#ec4899); border-radius:2px;
+    }
+    .nav-item { position: relative; }
     .line-clamp-2 {
       display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
       overflow: hidden;
     }
-    .fade-in { animation: fadeIn .25s ease-in-out; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+    .line-clamp-3 {
+      display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    /* === 动效 === */
+    .fade-in { animation: fadeIn .35s ease-in-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+    @keyframes scaleIn { from { opacity: 0; transform: scale(.95); } to { opacity: 1; transform: scale(1); } }
+    @keyframes gradient { 0%,100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+    @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+    @keyframes shimmer { 0% { background-position: -1000px 0; } 100% { background-position: 1000px 0; } }
+
+    .animate-fade-in-up { animation: fadeInUp .55s ease-out; }
+    .animate-scale-in { animation: scaleIn .35s ease-out; }
+
+    /* === 渐变背景 === */
+    .bg-mesh {
+      background-color: #faf5ff;
+      background-image:
+        radial-gradient(at 20% 10%, rgba(167,139,250,0.18) 0px, transparent 50%),
+        radial-gradient(at 80% 0%, rgba(251,146,60,0.12) 0px, transparent 50%),
+        radial-gradient(at 0% 50%, rgba(34,211,238,0.10) 0px, transparent 50%),
+        radial-gradient(at 80% 80%, rgba(236,72,153,0.10) 0px, transparent 50%),
+        radial-gradient(at 50% 100%, rgba(99,102,241,0.10) 0px, transparent 50%);
+    }
+    .bg-aurora {
+      background: linear-gradient(125deg, #ede9fe, #fef3c7, #fce7f3, #cffafe, #ede9fe);
+      background-size: 400% 400%;
+      animation: gradient 20s ease infinite;
+    }
+    .bg-aurora-2 {
+      background: linear-gradient(135deg, #a78bfa, #f472b6, #fb923c, #facc15);
+      background-size: 300% 300%;
+      animation: gradient 12s ease infinite;
+    }
+    .text-gradient {
+      background: linear-gradient(90deg, #7c3aed, #ec4899, #f97316);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      color: transparent;
+    }
+    .text-gradient-cool {
+      background: linear-gradient(90deg, #06b6d4, #6366f1, #ec4899);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    /* === 卡片 === */
+    .card {
+      background: #fff;
+      border: 1px solid rgba(229,231,235,.6);
+      border-radius: 16px;
+      transition: all .25s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .card::before {
+      content:''; position:absolute; inset:0; border-radius:16px; padding:1px;
+      background: linear-gradient(135deg, transparent 0%, transparent 100%);
+      -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+      -webkit-mask-composite: xor; mask-composite: exclude;
+      pointer-events: none;
+    }
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 20px 40px -12px rgba(124,58,237,.15), 0 8px 16px -8px rgba(0,0,0,.06);
+      border-color: rgba(167,139,250,.4);
+    }
+    .card:hover::before {
+      background: linear-gradient(135deg, #a78bfa 0%, #f472b6 50%, #fb923c 100%);
+    }
+
+    .card-grad-purple { background: linear-gradient(135deg, #ede9fe 0%, #fff 50%, #fdf4ff 100%); }
+    .card-grad-warm  { background: linear-gradient(135deg, #fff7ed 0%, #fff 50%, #fef3c7 100%); }
+    .card-grad-cool  { background: linear-gradient(135deg, #ecfeff 0%, #fff 50%, #e0f2fe 100%); }
+    .card-grad-pink  { background: linear-gradient(135deg, #fce7f3 0%, #fff 50%, #fdf2f8 100%); }
+
+    /* === 标签徽章 === */
+    .badge {
+      display:inline-flex; align-items:center; gap:4px;
+      padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 600;
+      white-space: nowrap;
+    }
+    .badge-major { background: #ede9fe; color: #6d28d9; }
+    .badge-field { background: linear-gradient(90deg, #fce7f3, #ede9fe); color: #be185d; }
+    .badge-official { background: linear-gradient(90deg, #d1fae5, #a7f3d0); color: #065f46; }
+    .badge-type { background: #f1f5f9; color: #475569; }
+
+    /* === 资料来源按钮 === */
+    .source-link {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: 11px; color: #6d28d9; padding: 2px 6px;
+      border-radius: 6px; background: #f5f3ff;
+      transition: all .2s;
+    }
+    .source-link:hover { background: #ede9fe; color: #5b21b6; }
+
+    /* === 顶部导航 === */
+    .top-nav {
+      background: rgba(255,255,255,0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(229,231,235,.7);
+    }
+    .logo-icon {
+      background: linear-gradient(135deg, #8b5cf6, #ec4899, #f97316);
+      background-size: 200% 200%;
+      animation: gradient 6s ease infinite;
+    }
+
+    /* === 思维导图节点 === */
+    .mind-node { cursor: pointer; transition: all .2s; }
+    .mind-node:hover { filter: brightness(1.1) drop-shadow(0 4px 8px rgba(0,0,0,.1)); }
+    .mind-edge { transition: all .3s; }
+    .mind-edge:hover { stroke-width: 2.5; }
+
+    /* === 悬浮动效 === */
+    .float-1 { animation: float 6s ease-in-out infinite; }
+    .float-2 { animation: float 7s ease-in-out infinite .5s; }
+    .float-3 { animation: float 8s ease-in-out infinite 1s; }
+
+    /* === Toast === */
     .toast {
       position: fixed; left: 50%; bottom: 30px; transform: translateX(-50%);
-      background: #1f2937; color: #fff; padding: 10px 18px; border-radius: 8px;
-      box-shadow: 0 6px 20px rgba(0,0,0,.15); z-index: 9999;
+      background: linear-gradient(90deg, #7c3aed, #ec4899);
+      color: #fff; padding: 10px 18px; border-radius: 999px;
+      box-shadow: 0 10px 30px rgba(124,58,237,.4); z-index: 9999;
       animation: toastIn .25s ease;
+      font-size: 14px; font-weight: 500;
     }
     @keyframes toastIn { from { opacity: 0; transform: translate(-50%, 8px); } to { opacity: 1; transform: translate(-50%, 0); } }
-    /* PDF 缩略图 canvas 自适应 */
+
+    /* === 按钮 === */
+    .btn-grad {
+      background: linear-gradient(90deg, #7c3aed, #ec4899);
+      color: #fff; padding: 8px 20px; border-radius: 999px; font-weight: 600;
+      transition: all .2s; box-shadow: 0 4px 14px rgba(124,58,237,.3);
+    }
+    .btn-grad:hover { transform: translateY(-1px); box-shadow: 0 8px 22px rgba(124,58,237,.45); }
+    .btn-ghost {
+      background: rgba(255,255,255,.6); backdrop-filter: blur(8px);
+      color: #6d28d9; padding: 8px 20px; border-radius: 999px; font-weight: 600;
+      border: 1px solid rgba(167,139,250,.4);
+      transition: all .2s;
+    }
+    .btn-ghost:hover { background: rgba(255,255,255,.9); border-color: #8b5cf6; }
+
+    /* === PDF 缩略图 === */
     .pdf-thumb canvas { width: 100% !important; height: 100% !important; object-fit: contain; }
+
+    /* === Hero 装饰 === */
+    .hero-blob {
+      position: absolute; border-radius: 50%; filter: blur(60px); opacity: .5; pointer-events: none;
+    }
+    .hero-blob-1 { width: 300px; height: 300px; background: #fbbf24; top: -80px; right: -60px; }
+    .hero-blob-2 { width: 280px; height: 280px; background: #f472b6; bottom: -100px; left: -50px; }
+    .hero-blob-3 { width: 240px; height: 240px; background: #34d399; top: 30%; right: 30%; opacity: .3; }
+
+    /* === 响应式 === */
+    @media (max-width: 768px) {
+      .hero-blob-1 { width: 180px; height: 180px; }
+      .hero-blob-2 { width: 160px; height: 160px; }
+    }
+
+    /* === 入场延迟 === */
+    .stagger > * { opacity: 0; animation: fadeInUp .55s ease-out forwards; }
+    .stagger > *:nth-child(1) { animation-delay: .05s; }
+    .stagger > *:nth-child(2) { animation-delay: .10s; }
+    .stagger > *:nth-child(3) { animation-delay: .15s; }
+    .stagger > *:nth-child(4) { animation-delay: .20s; }
+    .stagger > *:nth-child(5) { animation-delay: .25s; }
+    .stagger > *:nth-child(6) { animation-delay: .30s; }
+    .stagger > *:nth-child(7) { animation-delay: .35s; }
+    .stagger > *:nth-child(8) { animation-delay: .40s; }
   </style>
 </head>
-<body class="bg-slate-50 text-slate-800 min-h-screen">
+<body class="bg-mesh text-slate-800 min-h-screen">
 
   <!-- 顶部导航 -->
-  <header class="bg-white border-b border-slate-200 sticky top-0 z-40">
-    <div class="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
-      <div class="flex items-center gap-2 cursor-pointer" onclick="App.go('home')">
-        <div class="w-8 h-8 rounded-lg bg-brand-500 text-white flex items-center justify-center font-bold">心</div>
-        <div>
-          <div class="font-bold text-brand-700 leading-tight">随心资料分享库</div>
-          <div class="text-[10px] text-slate-400 leading-tight">啥都赢小组 · 实践作品</div>
+  <header class="top-nav sticky top-0 z-40">
+    <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-3 cursor-pointer group" onclick="App.go('home')">
+        <div class="w-10 h-10 rounded-xl logo-icon text-white flex items-center justify-center font-bold text-lg shadow-md">心</div>
+        <div class="leading-tight">
+          <div class="font-bold text-brand-700 text-base group-hover:text-gradient transition">随心资料分享库</div>
+          <div class="text-[10px] text-slate-500">啥都赢小组 · 实践作品</div>
         </div>
       </div>
       <nav class="hidden md:flex items-center gap-1" id="topNav">
-        <button data-view="home"     class="nav-item px-3 py-1.5 text-sm text-slate-600 hover:text-brand-600 rounded-md">首页</button>
-        <button data-view="library"  class="nav-item px-3 py-1.5 text-sm text-slate-600 hover:text-brand-600 rounded-md">资料库</button>
-        <button data-view="feed"     class="nav-item px-3 py-1.5 text-sm text-slate-600 hover:text-brand-600 rounded-md">投喂资料</button>
-        <button data-view="upload"   class="nav-item px-3 py-1.5 text-sm text-slate-600 hover:text-brand-600 rounded-md">上传</button>
+        <button data-view="home"     class="nav-item px-4 py-1.5 text-sm text-slate-600 hover:text-brand-600 rounded-md font-medium">首页</button>
+        <button data-view="library"  class="nav-item px-4 py-1.5 text-sm text-slate-600 hover:text-brand-600 rounded-md font-medium">资料库</button>
+        <button data-view="mindmap"  class="nav-item px-4 py-1.5 text-sm text-slate-600 hover:text-brand-600 rounded-md font-medium">分类导图</button>
+        <button data-view="feed"     class="nav-item px-4 py-1.5 text-sm text-slate-600 hover:text-brand-600 rounded-md font-medium">投喂资料</button>
+        <button data-view="upload"   class="nav-item px-4 py-1.5 text-sm text-slate-600 hover:text-brand-600 rounded-md font-medium">上传</button>
       </nav>
       <div class="flex items-center gap-2" id="userArea"></div>
     </div>
@@ -95,325 +299,172 @@
 
     <!-- 首页 -->
     <section id="view-home" class="view active fade-in">
-      <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-500 to-brand-700 text-white p-8 md:p-12">
-        <div class="relative z-10 max-w-2xl">
-          <span class="inline-block bg-white/15 backdrop-blur text-xs px-3 py-1 rounded-full mb-3">Web 前端开发 · 实践作品</span>
-          <h1 class="text-2xl md:text-4xl font-bold leading-tight">把散落的学习资料，<br/>装进一个随手可查的库。</h1>
-          <p class="mt-3 text-brand-100 text-sm md:text-base">"随心资料分享库"——支持多格式在线预览、智能分类检索、一键分享互动。解决高校学生资料分散、查找困难的问题。</p>
-          <div class="mt-5 flex flex-wrap gap-3">
-            <button onclick="App.go('library')" class="bg-white text-brand-700 px-4 py-2 rounded-lg font-medium text-sm hover:bg-brand-50">浏览资料库</button>
-            <button onclick="App.go('upload')"  class="bg-white/10 backdrop-blur border border-white/30 text-white px-4 py-2 rounded-lg font-medium text-sm hover:bg-white/20">上传资料</button>
+      <div class="relative overflow-hidden rounded-3xl bg-aurora-2 text-white p-8 md:p-14 shadow-xl">
+        <div class="hero-blob hero-blob-1 float-1"></div>
+        <div class="hero-blob hero-blob-2 float-2"></div>
+        <div class="hero-blob hero-blob-3 float-3"></div>
+        <div class="relative z-10 max-w-2xl animate-fade-in-up">
+          <span class="inline-block bg-white/20 backdrop-blur text-xs px-3 py-1.5 rounded-full mb-4 border border-white/30">✨ Web 前端开发 · 实践作品 · 第二版</span>
+          <h1 class="text-3xl md:text-5xl font-bold leading-tight mb-4">资料，从此 <span class="text-yellow-200">随心</span> 取用</h1>
+          <p class="text-white/90 text-base md:text-lg mb-6 leading-relaxed">
+            一个属于大学生的<span class="font-semibold">学习资料共享平台</span>。<br>
+            考研 · 教资 · 四六级 · 法考 · CPA · 雅思 · 托福… 海量官方权威资源，<br class="hidden md:block">一键检索、在线预览、随取随用。
+          </p>
+          <div class="flex flex-wrap gap-3">
+            <button onclick="App.go('library')" class="btn-ghost">📚 立即逛资料库</button>
+            <button onclick="App.go('mindmap')" class="btn-ghost">🧭 查看分类导图</button>
+            <button onclick="App.go('upload')" class="btn-ghost">📤 我要分享资料</button>
           </div>
         </div>
-        <!-- 装饰 -->
-        <div class="absolute -right-12 -bottom-12 w-64 h-64 bg-white/10 rounded-full"></div>
-        <div class="absolute right-20 top-6 w-20 h-20 bg-white/10 rounded-full"></div>
       </div>
 
-      <!-- 统计 -->
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6" id="statCards"></div>
+      <!-- 数字角标 -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 stagger">
+        <div class="card card-grad-purple p-5 text-center">
+          <div class="text-3xl font-bold text-gradient" id="statResources">--</div>
+          <div class="text-xs text-slate-500 mt-1">📚 收录资料</div>
+        </div>
+        <div class="card card-grad-warm p-5 text-center">
+          <div class="text-3xl font-bold text-gradient" id="statOfficial">--</div>
+          <div class="text-xs text-slate-500 mt-1">✅ 官方权威</div>
+        </div>
+        <div class="card card-grad-cool p-5 text-center">
+          <div class="text-3xl font-bold text-gradient" id="statFields">--</div>
+          <div class="text-xs text-slate-500 mt-1">🎯 覆盖领域</div>
+        </div>
+        <div class="card card-grad-pink p-5 text-center">
+          <div class="text-3xl font-bold text-gradient" id="statDownloads">--</div>
+          <div class="text-xs text-slate-500 mt-1">⬇️ 浏览下载</div>
+        </div>
+      </div>
 
       <!-- 功能模块 -->
-      <h2 class="mt-8 mb-3 text-lg font-semibold text-slate-700">三大功能模块</h2>
-      <div class="grid md:grid-cols-3 gap-4">
-        <div class="bg-white p-5 rounded-xl border border-slate-200 hover:shadow-md transition cursor-pointer" onclick="App.go('library')">
-          <div class="w-10 h-10 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center mb-3">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
-          </div>
-          <h3 class="font-semibold">资料模块</h3>
-          <p class="text-sm text-slate-500 mt-1">上传、分类、检索与多格式在线预览（PDF/Word/图片）。</p>
+      <h2 class="text-2xl font-bold mt-10 mb-5 flex items-center gap-2">
+        <span class="w-1.5 h-6 bg-gradient-to-b from-brand-500 to-pink-500 rounded"></span>
+        <span class="text-gradient">三大核心模块</span>
+      </h2>
+      <div class="grid md:grid-cols-3 gap-5 stagger">
+        <div class="card p-6 cursor-pointer" onclick="App.go('library')">
+          <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-brand-400 to-brand-600 text-white flex items-center justify-center text-2xl mb-4 float-1">📚</div>
+          <h3 class="font-bold text-lg mb-2">资料模块</h3>
+          <p class="text-sm text-slate-600 leading-relaxed">多格式在线预览 · 智能缩略图 · 标签检索 · 分类筛选 · 点赞收藏</p>
         </div>
-        <div class="bg-white p-5 rounded-xl border border-slate-200 hover:shadow-md transition cursor-pointer" onclick="App.go('library')">
-          <div class="w-10 h-10 bg-emerald-100 text-emerald-600 rounded-lg flex items-center justify-center mb-3">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-          </div>
-          <h3 class="font-semibold">分享模块</h3>
-          <p class="text-sm text-slate-500 mt-1">评论、点赞、收藏，优质内容自动浮现。</p>
+        <div class="card p-6 cursor-pointer" onclick="App.go('upload')">
+          <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-sunset-400 to-sunset-600 text-white flex items-center justify-center text-2xl mb-4 float-2">📤</div>
+          <h3 class="font-bold text-lg mb-2">用户模块</h3>
+          <p class="text-sm text-slate-600 leading-relaxed">注册 / 登录 / 个人中心 · 资料上传 · 我的作品管理 · 公开/私有</p>
         </div>
-        <div class="bg-white p-5 rounded-xl border border-slate-200 hover:shadow-md transition cursor-pointer" onclick="App.requireAuth(()=>App.go('profile'))">
-          <div class="w-10 h-10 bg-violet-100 text-violet-600 rounded-lg flex items-center justify-center mb-3">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-          </div>
-          <h3 class="font-semibold">用户模块</h3>
-          <p class="text-sm text-slate-500 mt-1">注册/登录/个人中心，管理资料与收藏。</p>
+        <div class="card p-6 cursor-pointer" onclick="App.go('feed')">
+          <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-ocean-400 to-ocean-600 text-white flex items-center justify-center text-2xl mb-4 float-3">💬</div>
+          <h3 class="font-bold text-lg mb-2">分享模块</h3>
+          <p class="text-sm text-slate-600 leading-relaxed">评论互动 · 点赞收藏 · 资源分享 · 社区共建 · 经验交流</p>
         </div>
       </div>
 
-      <!-- 最新资料 -->
-      <h2 class="mt-8 mb-3 text-lg font-semibold text-slate-700 flex items-center justify-between">
-        <span>最新资料</span>
-        <a class="text-sm text-brand-600 cursor-pointer" onclick="App.go('library')">查看全部 →</a>
+      <!-- 推荐资料 -->
+      <h2 class="text-2xl font-bold mt-10 mb-5 flex items-center gap-2">
+        <span class="w-1.5 h-6 bg-gradient-to-b from-brand-500 to-pink-500 rounded"></span>
+        <span class="text-gradient">🔥 热门官方权威资料</span>
       </h2>
-      <div id="latestGrid" class="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"></div>
+      <div id="featuredResources" class="grid md:grid-cols-2 lg:grid-cols-3 gap-5"></div>
     </section>
 
     <!-- 资料库 -->
     <section id="view-library" class="view fade-in">
-      <div class="flex flex-col md:flex-row md:items-center gap-3 mb-4">
-        <h2 class="text-xl font-semibold flex-1">资料库</h2>
-        <div class="flex flex-1 max-w-xl gap-2">
-          <input id="searchInput" type="text" placeholder="搜索资料标题、描述、标签..."
-                 class="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-200" />
-          <select id="sortSelect" class="px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white">
-            <option value="latest">最新发布</option>
-            <option value="hot">最受欢迎</option>
-            <option value="downloads">下载最多</option>
-          </select>
+      <div class="flex items-end justify-between mb-5 flex-wrap gap-3">
+        <div>
+          <h2 class="text-2xl font-bold text-gradient">📚 资料库</h2>
+          <p class="text-sm text-slate-500 mt-1">多维度筛选 · 实时检索 · 在线预览</p>
+        </div>
+        <div class="flex gap-2">
+          <input id="libSearch" type="text" placeholder="🔍 搜索资料..." class="px-4 py-2 rounded-full border border-slate-200 text-sm w-64 focus:outline-none focus:border-brand-400" />
+          <button onclick="App.go('upload')" class="btn-grad text-sm whitespace-nowrap">+ 上传</button>
         </div>
       </div>
-
-      <!-- 专业维度 -->
-      <div class="mb-3">
-        <div class="flex items-center gap-2 mb-2">
-          <span class="text-xs font-medium text-slate-500 w-14">专业</span>
-          <div class="flex flex-wrap gap-1.5" id="majorTabs"></div>
-        </div>
-      </div>
-      <!-- 领域维度 -->
-      <div class="mb-4">
-        <div class="flex items-center gap-2 mb-2">
-          <span class="text-xs font-medium text-slate-500 w-14">领域</span>
-          <div class="flex flex-wrap gap-1.5" id="fieldTabs"></div>
-        </div>
-      </div>
-
-      <!-- 资料网格 -->
-      <div id="libraryGrid" class="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"></div>
-      <div id="emptyLibrary" class="hidden text-center text-slate-400 py-16">没有找到匹配的资料</div>
+      <div id="categoryTabs" class="flex flex-wrap gap-2 mb-5"></div>
+      <div id="resourceGrid" class="grid md:grid-cols-2 lg:grid-cols-3 gap-5"></div>
     </section>
 
-    <!-- 资料详情 -->
-    <section id="view-detail" class="view fade-in">
-      <button class="text-sm text-slate-500 mb-3 hover:text-brand-600" onclick="App.go('library')">← 返回资料库</button>
-      <div id="detailContent"></div>
+    <!-- 思维导图 -->
+    <section id="view-mindmap" class="view fade-in">
+      <div class="text-center mb-6">
+        <h2 class="text-3xl font-bold text-gradient">🧭 资料分类全景</h2>
+        <p class="text-sm text-slate-500 mt-2">从"专业方向"到"考试领域"再到"学习场景"，一张图看懂所有资料分类</p>
+      </div>
+      <div class="card p-4 md:p-8 overflow-x-auto">
+        <svg id="mindmapSvg" viewBox="0 0 1200 720" class="w-full" style="min-width: 900px;"></svg>
+      </div>
+      <div class="text-center mt-4 text-xs text-slate-500">
+        💡 提示：思维导图覆盖了 <span class="font-bold text-brand-600">8 大专业方向</span> · <span class="font-bold text-brand-600">7 个考试领域</span> · <span class="font-bold text-brand-600">5 类学习场景</span>
+      </div>
+    </section>
+
+    <!-- 投喂 -->
+    <section id="view-feed" class="view fade-in">
+      <h2 class="text-2xl font-bold text-gradient">🍱 投喂资料</h2>
+      <p class="text-sm text-slate-500 mt-1 mb-5">三种方式，把你手上的资料快速分享到资料库</p>
+      <div class="grid md:grid-cols-3 gap-5" id="feedForms"></div>
     </section>
 
     <!-- 上传 -->
     <section id="view-upload" class="view fade-in">
-      <div class="max-w-2xl mx-auto bg-white border border-slate-200 rounded-xl p-6">
-        <h2 class="text-lg font-semibold mb-1">上传资料</h2>
-        <p class="text-sm text-slate-500 mb-4">支持 PDF / Word (.docx) / 图片 (PNG, JPG)，单文件不超过 8MB。</p>
-        <form id="uploadForm" class="space-y-3">
-          <div>
-            <label class="text-sm text-slate-600">资料标题 *</label>
-            <input name="title" required maxlength="60"
-                   class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-200"
-                   placeholder="例如：新闻学概论·第三章 笔记" />
-          </div>
-          <div>
-            <label class="text-sm text-slate-600">资料描述</label>
-            <textarea name="desc" rows="3" maxlength="300"
-                      class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-200"
-                      placeholder="一句话介绍这份资料的内容..."></textarea>
-          </div>
-            <div class="grid grid-cols-2 gap-3">
-            <div>
-              <label class="text-sm text-slate-600">专业 *</label>
-              <select name="major" required class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white" id="uploadMajorSelect">
-                <!-- 由 JS 动态填充 -->
-              </select>
-              <input name="majorNew" placeholder="若不在列表，可填写新专业"
-                     class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm" />
-            </div>
-            <div>
-              <label class="text-sm text-slate-600">领域 *</label>
-              <select name="field" required class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white" id="uploadFieldSelect">
-                <!-- 由 JS 动态填充 -->
-              </select>
-              <input name="fieldNew" placeholder="若不在列表，可填写新领域（如：法考、CPA）"
-                     class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm" />
-            </div>
-          </div>
-          <div>
-            <label class="text-sm text-slate-600">标签（逗号分隔）</label>
-            <input name="tags" class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm"
-                   placeholder="例如：笔记, 期末复习, 真题" />
-          </div>
-          <div>
-            <label class="text-sm text-slate-600">文件 *</label>
-            <div class="mt-1 border-2 border-dashed border-slate-200 rounded-lg p-6 text-center cursor-pointer hover:border-brand-300 hover:bg-brand-50/30"
-                 id="dropZone">
-              <input type="file" id="fileInput" name="file" accept=".pdf,.docx,.png,.jpg,.jpeg,.gif,.webp" class="hidden" required />
-              <div id="fileInfo" class="text-sm text-slate-500">
-                <svg class="mx-auto mb-2 text-slate-300" xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
-                </svg>
-                点击或拖拽文件到这里<br/>
-                <span class="text-xs text-slate-400">PDF / DOCX / PNG / JPG，最大 8MB</span>
-              </div>
-            </div>
-          </div>
-          <div class="flex justify-end gap-2 pt-2">
-            <button type="button" onclick="App.go('library')" class="px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-lg">取消</button>
-            <button type="submit" class="px-4 py-2 text-sm bg-brand-500 text-white rounded-lg hover:bg-brand-600">立即上传</button>
-          </div>
-        </form>
-      </div>
+      <h2 class="text-2xl font-bold text-gradient">📤 上传资料</h2>
+      <p class="text-sm text-slate-500 mt-1 mb-5">支持 PDF / Word / 图片 / 链接，新专业/新领域自动入库</p>
+      <form id="uploadForm" class="card p-6 max-w-2xl space-y-4"></form>
     </section>
+
+    <!-- 资料详情 -->
+    <section id="view-detail" class="view fade-in"></section>
 
     <!-- 个人中心 -->
-    <section id="view-profile" class="view fade-in">
-      <div id="profileContent"></div>
-    </section>
-
-    <!-- 投喂资料（批量入库：JSON / 模板表格） -->
-    <section id="view-feed" class="view fade-in">
-      <div class="max-w-3xl mx-auto">
-        <div class="bg-gradient-to-r from-amber-50 to-rose-50 border border-amber-200 rounded-xl p-5 mb-5">
-          <h2 class="text-lg font-semibold text-amber-800">🪄 投喂资料 · 一键扩展资料库</h2>
-          <p class="text-sm text-amber-700 mt-1">任何人都可以把"任意专业 / 任意领域"的资料批量塞进资料库：考研、教资、四六级、法考、CPA、公务员、教师招聘、雅思、托福……都可以。</p>
-          <ul class="text-xs text-amber-700 mt-2 list-disc pl-5 space-y-0.5">
-            <li>每条资料至少要有：<b>title</b> + <b>major</b>（专业）+ <b>field</b>（领域）+ <b>type</b>（pdf/docx/image）</li>
-            <li>未填的 <code>major</code> / <code>field</code> 会自动加入字典，下次上传可直接选用</li>
-            <li>不需要登录即可投喂；记录会标记为"<b>社区贡献</b>"（如想归属到自己，请先登录）</li>
-          </ul>
-        </div>
-
-        <!-- 方式 1：粘贴 JSON -->
-        <div class="bg-white border border-slate-200 rounded-xl p-5">
-          <div class="flex items-center justify-between">
-            <h3 class="font-semibold">方式 1 · 粘贴 JSON（可批量）</h3>
-            <button id="feedTemplateBtn" class="text-xs text-brand-600 hover:underline">查看模板 →</button>
-          </div>
-          <textarea id="feedJson" rows="8" placeholder='例如：
-[
-  { "title": "考研英语·高频词 800", "major": "英语", "field": "kaoyan", "type": "pdf", "size": 320000, "desc": "近 5 年真题词频统计", "tags": ["考研","词汇"] },
-  { "title": "教资·小学综合素质 2024 真题", "major": "教育学", "field": "jiaozi", "type": "docx", "size": 540000, "tags": ["教资","真题"] }
-]' class="mt-2 w-full px-3 py-2 border border-slate-200 rounded-lg text-xs font-mono focus:outline-none focus:ring-2 focus:ring-brand-200"></textarea>
-          <div class="mt-3 flex justify-end gap-2">
-            <button id="feedJsonClear" class="px-3 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-lg">清空</button>
-            <button id="feedJsonSubmit" class="px-4 py-2 text-sm bg-brand-500 text-white rounded-lg hover:bg-brand-600">批量入库</button>
-          </div>
-        </div>
-
-        <!-- 方式 2：模板表格（一行一条，Excel 可粘贴） -->
-        <div class="bg-white border border-slate-200 rounded-xl p-5 mt-5">
-          <div class="flex items-center justify-between">
-            <h3 class="font-semibold">方式 2 · 填表投喂（一行一条，Excel 直接粘进来）</h3>
-            <button id="feedAddRow" class="text-xs text-brand-600 hover:underline">+ 添加一行</button>
-          </div>
-          <p class="text-xs text-slate-500 mt-1">支持从 Excel / 飞书表格复制粘贴；标题与专业必填。</p>
-          <div class="overflow-x-auto mt-3">
-            <table class="w-full text-xs" id="feedTable">
-              <thead class="text-slate-500">
-                <tr class="border-b border-slate-200">
-                  <th class="text-left py-2 pr-2 font-medium w-8">#</th>
-                  <th class="text-left py-2 pr-2 font-medium">标题 *</th>
-                  <th class="text-left py-2 pr-2 font-medium">专业 *</th>
-                  <th class="text-left py-2 pr-2 font-medium">领域 *</th>
-                  <th class="text-left py-2 pr-2 font-medium">类型</th>
-                  <th class="text-left py-2 pr-2 font-medium">大小(B)</th>
-                  <th class="text-left py-2 pr-2 font-medium">标签</th>
-                  <th class="text-left py-2 pr-2 font-medium">描述</th>
-                  <th class="w-8"></th>
-                </tr>
-              </thead>
-              <tbody id="feedTbody"></tbody>
-            </table>
-          </div>
-          <div class="mt-3 flex flex-wrap items-center justify-between gap-2">
-            <div class="text-xs text-slate-500" id="feedHint">已填写 0 条</div>
-            <div class="flex gap-2">
-              <button id="feedLoadSample" class="px-3 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-lg">载入示例</button>
-              <button id="feedTableSubmit" class="px-4 py-2 text-sm bg-brand-500 text-white rounded-lg hover:bg-brand-600">表格入库</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- 方式 3：文件批量（保留文件名/大小，自动按扩展名分类） -->
-        <div class="bg-white border border-slate-200 rounded-xl p-5 mt-5">
-          <h3 class="font-semibold">方式 3 · 拖一堆文件进来（最省事）</h3>
-          <p class="text-xs text-slate-500 mt-1">选择专业 + 领域后，文件按扩展名自动归类（PDF/Word/图片），未填的字段用文件名当标题。</p>
-          <div class="grid sm:grid-cols-2 gap-3 mt-3">
-            <div>
-              <label class="text-xs text-slate-500">专业（可填新值）</label>
-              <input id="feedFilesMajor" list="feedFilesMajorList" class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm" placeholder="例如：新闻学" />
-              <datalist id="feedFilesMajorList"></datalist>
-            </div>
-            <div>
-              <label class="text-xs text-slate-500">领域（可填新值，如 法考/教资/考研）</label>
-              <input id="feedFilesField" list="feedFilesFieldList" class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm" placeholder="例如：kaoyan" />
-              <datalist id="feedFilesFieldList"></datalist>
-            </div>
-          </div>
-          <div id="feedFilesDrop" class="mt-3 border-2 border-dashed border-slate-200 rounded-lg p-6 text-center cursor-pointer hover:border-brand-300 hover:bg-brand-50/30">
-            <input type="file" id="feedFilesInput" multiple accept=".pdf,.docx,.png,.jpg,.jpeg,.gif,.webp" class="hidden" />
-            <div class="text-sm text-slate-500">
-              <svg class="mx-auto mb-2 text-slate-300" xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-              点击或拖拽多个文件到这里<br/>
-              <span class="text-xs text-slate-400">每文件 ≤ 8MB</span>
-            </div>
-          </div>
-          <div id="feedFilesList" class="mt-2 text-xs text-slate-500"></div>
-          <div class="mt-3 flex justify-end">
-            <button id="feedFilesSubmit" class="px-4 py-2 text-sm bg-brand-500 text-white rounded-lg hover:bg-brand-600">把这些文件全入库</button>
-          </div>
-        </div>
-
-        <!-- 最近投喂记录 -->
-        <div class="mt-6">
-          <h3 class="font-semibold text-slate-700 mb-2">最近投喂</h3>
-          <div id="feedRecent" class="space-y-2"></div>
-        </div>
-      </div>
-    </section>
-
+    <section id="view-profile" class="view fade-in"></section>
   </main>
 
-  <!-- 移动端底部导航 -->
-  <nav class="md:hidden fixed bottom-0 inset-x-0 bg-white border-t border-slate-200 z-40">
-    <div class="grid grid-cols-4">
-      <button data-view="home"    class="nav-item active flex flex-col items-center py-2 text-xs text-slate-500">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>首页
-      </button>
-      <button data-view="library" class="nav-item flex flex-col items-center py-2 text-xs text-slate-500">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>资料库
-      </button>
-      <button data-view="feed"    class="nav-item flex flex-col items-center py-2 text-xs text-slate-500">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>投喂
-      </button>
-      <button data-view="upload"  class="nav-item flex flex-col items-center py-2 text-xs text-slate-500">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>上传
-      </button>
-    </div>
+  <!-- 底部 Tab 栏（移动端） -->
+  <nav class="md:hidden fixed bottom-0 inset-x-0 bg-white/90 backdrop-blur border-t border-slate-200 z-30 grid grid-cols-5">
+    <button data-view="home"    class="nav-item-mobile py-2 text-[10px] text-slate-500 flex flex-col items-center gap-0.5">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 12 12 3l9 9M5 10v10h14V10"/></svg>
+      <span>首页</span>
+    </button>
+    <button data-view="library" class="nav-item-mobile py-2 text-[10px] text-slate-500 flex flex-col items-center gap-0.5">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4h6v16H4zM14 4h6v16h-6z"/></svg>
+      <span>资料</span>
+    </button>
+    <button data-view="mindmap" class="nav-item-mobile py-2 text-[10px] text-slate-500 flex flex-col items-center gap-0.5">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><circle cx="4" cy="6" r="2"/><circle cx="20" cy="6" r="2"/><circle cx="4" cy="18" r="2"/><circle cx="20" cy="18" r="2"/><path d="M6 7l4 4M18 7l-4 4M6 17l4-4M18 17l-4-4"/></svg>
+      <span>导图</span>
+    </button>
+    <button data-view="feed"    class="nav-item-mobile py-2 text-[10px] text-slate-500 flex flex-col items-center gap-0.5">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      <span>投喂</span>
+    </button>
+    <button data-view="upload"  class="nav-item-mobile py-2 text-[10px] text-slate-500 flex flex-col items-center gap-0.5">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+      <span>上传</span>
+    </button>
   </nav>
-  <div class="md:hidden h-14"></div>
 
-  <!-- 登录/注册弹窗 -->
-  <div id="authModal" class="hidden fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
-    <div class="bg-white rounded-xl w-full max-w-sm p-6 fade-in">
-      <div class="flex justify-between items-center mb-4">
-        <h3 id="authTitle" class="text-lg font-semibold">登录</h3>
-        <button onclick="Auth.close()" class="text-slate-400 hover:text-slate-600">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-        </button>
-      </div>
+  <!-- 登录/注册 弹窗 -->
+  <div id="authModal" class="hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="card p-6 w-full max-w-sm animate-scale-in">
+      <h3 class="text-lg font-bold mb-1 text-gradient" id="authTitle">登录</h3>
+      <p class="text-xs text-slate-500 mb-4" id="authSubtitle">登录后即可上传资料、评论互动</p>
       <form id="authForm" class="space-y-3">
-        <div id="authNameWrap" class="hidden">
-          <label class="text-sm text-slate-600">昵称</label>
-          <input name="name" class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm" placeholder="如何称呼你？" />
-        </div>
-        <div>
-          <label class="text-sm text-slate-600">学号 / 账号</label>
-          <input name="account" required class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm" placeholder="例如 P241012503" />
-        </div>
-        <div>
-          <label class="text-sm text-slate-600">密码</label>
-          <input name="password" type="password" required minlength="4"
-                 class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm" placeholder="至少 4 位" />
-        </div>
-        <button type="submit" id="authSubmit" class="w-full py-2 bg-brand-500 text-white rounded-lg text-sm hover:bg-brand-600">登录</button>
+        <input id="authUsername" type="text" placeholder="用户名" class="w-full px-4 py-2.5 rounded-lg border border-slate-200 text-sm focus:outline-none focus:border-brand-400" required />
+        <input id="authPassword" type="password" placeholder="密码" class="w-full px-4 py-2.5 rounded-lg border border-slate-200 text-sm focus:outline-none focus:border-brand-400" required />
+        <button type="submit" class="btn-grad w-full" id="authSubmit">登录</button>
       </form>
-      <p class="text-xs text-slate-400 text-center mt-3">
+      <div class="text-xs text-center mt-3 text-slate-500">
         <span id="authToggleText">还没有账号？</span>
-        <a id="authToggle" class="text-brand-600 cursor-pointer">立即注册</a>
-      </p>
-      <div class="mt-3 text-center">
-        <button onclick="Auth.demoLogin()" class="text-xs text-slate-400 hover:text-brand-600">以体验账号登录 →</button>
+        <a href="javascript:void(0)" onclick="Auth.toggle()" class="text-brand-600 font-semibold" id="authToggleLink">立即注册</a>
       </div>
+      <div class="mt-3 text-center">
+        <a href="javascript:void(0)" onclick="Auth.demoLogin()" class="text-xs text-slate-400 hover:text-brand-600 underline">🎯 一键体验账号 demo / demo</a>
+      </div>
+      <button onclick="Auth.close()" class="absolute top-3 right-3 text-slate-400 hover:text-slate-600 text-xl">×</button>
     </div>
   </div>
 
-  <script src="app.js"></script>
+  <script src="./app.js"></script>
 </body>
 </html>

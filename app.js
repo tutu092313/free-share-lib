@@ -1,7 +1,8 @@
 /* =============================================================
-   随心资料分享库 — 主程序
+   随心资料分享库 — 主程序（v4 升级版）
    技术栈：原生 JS + Tailwind（CDN）+ PDF.js + mammoth.js
    存储：localStorage（实践作品无后端）
+   升级：装饰 / 官方权威资料 / 思维导图 / 视觉升级
    ============================================================= */
 
 (function () {
@@ -13,11 +14,11 @@
     SESSION:  'sxsx.session',
     RESOURCES:'sxsx.resources',
     COMMENTS: 'sxsx.comments',
-    LIKES:    'sxsx.likes',     // { resourceId: [userId,...] }
-    FAVS:     'sxsx.favs',      // { userId: [resourceId,...] }
-    MAJORS:   'sxsx.majors',    // 专业字典（用户可扩展）
-    FIELDS:   'sxsx.fields',    // 领域字典（考研/教资/四六级/法考…）
-    SEEDED:   'sxsx.seeded.v3'
+    LIKES:    'sxsx.likes',
+    FAVS:     'sxsx.favs',
+    MAJORS:   'sxsx.majors',
+    FIELDS:   'sxsx.fields',
+    SEEDED:   'sxsx.seeded.v4'
   };
   const get = (k, def) => { try { return JSON.parse(localStorage.getItem(k)) ?? def; } catch { return def; } };
   const set = (k, v) => localStorage.setItem(k, JSON.stringify(v));
@@ -65,7 +66,7 @@
     { id: 'cet',     name: '四六级', icon: '🅰️' },
     { id: 'fakao',   name: '法考',   icon: '⚖️' },
     { id: 'cpa',     name: 'CPA',   icon: '💼' },
-    { id: 'gwy',     name: '公务员考试', icon: '🏛️' },
+    { id: 'gwy',     name: '公务员', icon: '🏛️' },
     { id: 'teacher', name: '教师招聘', icon: '🏫' },
     { id: 'ielts',   name: '雅思',   icon: '🌍' },
     { id: 'toefl',   name: '托福',   icon: '🛫' },
@@ -77,7 +78,15 @@
     majors() { return get(LS.MAJORS, DEFAULT_MAJORS.slice()); },
     fields() { return get(LS.FIELDS, DEFAULT_FIELDS.slice()); },
     addMajor(name) { const n = (name || '').trim(); if (!n) return null; const list = this.majors(); if (!list.includes(n)) { list.push(n); set(LS.MAJORS, list); } return n; },
-    addField(name) { const n = (name || '').trim(); if (!n) return null; const list = this.fields(); if (!list.find(x => x.name === n)) { list.push({ id: 'fld_' + Date.now() + '_' + Math.floor(Math.random()*999), name: n, icon: '🗂️' }); set(LS.FIELDS, list); } return n; },
+    addField(name) {
+      const n = (name || '').trim(); if (!n) return null;
+      const list = this.fields();
+      if (!list.find(x => x.name === n)) {
+        list.push({ id: 'fld_' + Date.now() + '_' + Math.floor(Math.random()*999), name: n, icon: '🗂️' });
+        set(LS.FIELDS, list);
+      }
+      return n;
+    },
     fieldIdByName(name) {
       const f = this.fields().find(x => x.name === name || x.id === name);
       return f ? f.id : null;
@@ -89,15 +98,24 @@
   };
 
   /* ---------- 投喂：通用入库工具 ---------- */
+  function iconThumb(kind) {
+    const color = { pdf: '#dc2626', docx: '#2563eb', image: '#059669', file: '#64748b', link: '#7c3aed' }[kind] || '#64748b';
+    const label = { pdf: 'PDF', docx: 'DOCX', image: 'IMG', file: 'FILE', link: '🔗' }[kind] || 'FILE';
+    const c = document.createElement('canvas');
+    c.width = 320; c.height = 220;
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = '#f8fafc'; ctx.fillRect(0, 0, 320, 220);
+    ctx.fillStyle = color; ctx.font = 'bold 56px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(label, 160, 110);
+    return c.toDataURL('image/jpeg', 0.8);
+  }
   const Feed = {
-    /* 标准化一条记录：补齐字段、推断类型、归一化 major/field */
     normalizeOne(raw) {
       if (!raw || typeof raw !== 'object') return null;
       const title = (raw.title || raw.名称 || raw.name || '').toString().trim();
       if (!title) return null;
       const major = (raw.major || raw.专业 || '').toString().trim() || '其他';
       const m = Dict.addMajor(major) || '其他';
-      // 领域：可能是名字也可能是 id
       let fInput = (raw.field || raw.领域 || '').toString().trim();
       let fieldId = Dict.fieldIdByName(fInput);
       if (!fieldId) {
@@ -105,27 +123,33 @@
         fieldId = Dict.fieldIdByName(added);
       }
       const type = (raw.type || raw.类型 || '').toString().toLowerCase();
-      const t = ['pdf','docx','image'].includes(type) ? type : (type === 'jpg' || type === 'jpeg' || type === 'png' || type === 'gif' || type === 'webp' ? 'image' : (type === 'word' ? 'docx' : 'pdf'));
+      const t = ['pdf','docx','image','link'].includes(type) ? type :
+        (type === 'jpg' || type === 'jpeg' || type === 'png' || type === 'gif' || type === 'webp' ? 'image' :
+        (type === 'word' ? 'docx' : (raw.url ? 'link' : 'pdf')));
       const size = Number(raw.size || raw.大小 || 0) || 0;
       const desc = (raw.desc || raw.描述 || '').toString();
       const tags = (raw.tags || raw.标签 || []);
       const tagsArr = Array.isArray(tags) ? tags.map(String) : String(tags).split(/[,，]/).map(s => s.trim()).filter(Boolean);
       return {
-        id: uid(),
-        title,
-        desc,
+        id: raw.id || uid(),
+        title, desc,
         major: m,
         field: fieldId,
         type: t,
         size,
-        fileName: raw.fileName || raw.文件名 || (title + '.' + (t === 'image' ? 'png' : t)),
+        url: raw.url || null,
+        fileName: raw.fileName || raw.文件名 || (title + (t === 'link' ? '' : '.' + (t === 'image' ? 'png' : t))),
         fileData: raw.fileData || null,
         thumb: iconThumb(t),
-        uploaderId: currentUser() ? currentUser().id : 'u_demo',
-        uploaderName: currentUser() ? currentUser().name : '社区贡献',
-        createdAt: Date.now(),
-        downloads: 0,
-        tags: tagsArr
+        uploaderId: raw.uploaderId || (currentUser() ? currentUser().id : 'u_demo'),
+        uploaderName: raw.uploaderName || (currentUser() ? currentUser().name : '社区贡献'),
+        createdAt: raw.createdAt || Date.now(),
+        downloads: raw.downloads || 0,
+        tags: tagsArr,
+        sourceName: raw.sourceName || null,
+        sourceUrl: raw.sourceUrl || null,
+        sourceIcon: raw.sourceIcon || null,
+        credibility: raw.credibility || null
       };
     },
     addOne(raw) {
@@ -139,61 +163,6 @@
       let ok = 0, fail = 0;
       list.forEach(it => { if (this.addOne(it)) ok++; else fail++; });
       return { ok, fail, total: list.length };
-    }
-  };
-
-  /* ---------- 鉴权 ---------- */
-  const Auth = {
-    mode: 'login',
-    open(mode = 'login') {
-      this.mode = mode;
-      $('#authTitle').textContent = mode === 'login' ? '登录' : '注册';
-      $('#authSubmit').textContent = mode === 'login' ? '登录' : '注册并登录';
-      $('#authNameWrap').classList.toggle('hidden', mode === 'login');
-      $('#authToggleText').textContent = mode === 'login' ? '还没有账号？' : '已有账号？';
-      $('#authToggle').textContent = mode === 'login' ? '立即注册' : '直接登录';
-      $('#authModal').classList.remove('hidden');
-      setTimeout(() => $('#authForm [name=account]').focus(), 50);
-    },
-    close() { $('#authModal').classList.add('hidden'); $('#authForm').reset(); },
-    toggle() { this.open(this.mode === 'login' ? 'register' : 'login'); },
-    demoLogin() {
-      // 确保有体验账号
-      const users = get(LS.USERS, []);
-      let demo = users.find(u => u.account === 'demo');
-      if (!demo) {
-        demo = { id: uid(), account: 'demo', password: 'demo', name: '体验同学', bio: '这是体验账号', createdAt: Date.now() };
-        users.push(demo); set(LS.USERS, users);
-      }
-      set(LS.SESSION, { userId: demo.id });
-      this.close();
-      App.renderUserArea();
-      App.reRender();
-      toast('已以体验账号登录');
-    },
-    submit(e) {
-      e.preventDefault();
-      const fd = new FormData(e.target);
-      const account = (fd.get('account') || '').trim();
-      const password = (fd.get('password') || '').trim();
-      if (!account || !password) return toast('请填写完整');
-      const users = get(LS.USERS, []);
-      if (this.mode === 'register') {
-        const name = (fd.get('name') || '').trim() || account;
-        if (users.find(u => u.account === account)) return toast('该账号已注册');
-        const u = { id: uid(), account, password, name, bio: '这家伙很懒，什么也没留下~', createdAt: Date.now() };
-        users.push(u); set(LS.USERS, users);
-        set(LS.SESSION, { userId: u.id });
-        toast('注册成功，欢迎 ' + name);
-      } else {
-        const u = users.find(u => u.account === account && u.password === password);
-        if (!u) return toast('账号或密码错误');
-        set(LS.SESSION, { userId: u.id });
-        toast('登录成功，欢迎回来 ' + u.name);
-      }
-      this.close();
-      App.renderUserArea();
-      App.reRender();
     }
   };
 
@@ -211,6 +180,8 @@
     byUser(uid) { return this.all().filter(r => r.uploaderId === uid); },
     add(r) {
       const list = get(LS.RESOURCES, []);
+      // 同 id 不重复入库
+      if (list.find(x => x.id === r.id)) return;
       list.unshift(r);
       set(LS.RESOURCES, list);
     },
@@ -228,9 +199,7 @@
 
   /* ---------- 评论 ---------- */
   const Comment = {
-    byResource(rid) {
-      return get(LS.COMMENTS, []).filter(c => c.resourceId === rid).sort((a, b) => a.createdAt - b.createdAt);
-    },
+    byResource(rid) { return get(LS.COMMENTS, []).filter(c => c.resourceId === rid).sort((a, b) => a.createdAt - b.createdAt); },
     add(c) { const list = get(LS.COMMENTS, []); list.push(c); set(LS.COMMENTS, list); }
   };
 
@@ -271,8 +240,6 @@
       fr.readAsDataURL(file);
     });
   }
-
-  /* ---------- 缩略图生成（PDF / 图片 / Word） ---------- */
   async function makeThumbnail(file) {
     const type = (file.type || '').toLowerCase();
     const name = file.name.toLowerCase();
@@ -299,7 +266,6 @@
         });
       }
       if (type.includes('pdf') || name.endsWith('.pdf')) {
-        // 用 PDF.js 渲染第一页
         const buf = await file.arrayBuffer();
         const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
         const page = await pdf.getPage(1);
@@ -319,88 +285,146 @@
       return iconThumb(name.endsWith('.pdf') ? 'pdf' : (name.endsWith('.docx') ? 'docx' : 'file'));
     }
   }
-  function iconThumb(kind) {
-    const color = { pdf: '#dc2626', docx: '#2563eb', image: '#059669', file: '#64748b' }[kind] || '#64748b';
-    const label = { pdf: 'PDF', docx: 'DOCX', image: 'IMG', file: 'FILE' }[kind] || 'FILE';
-    const c = document.createElement('canvas');
-    c.width = 320; c.height = 220;
-    const ctx = c.getContext('2d');
-    ctx.fillStyle = '#f8fafc'; ctx.fillRect(0, 0, 320, 220);
-    ctx.fillStyle = color; ctx.font = 'bold 56px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText(label, 160, 110);
-    return c.toDataURL('image/jpeg', 0.8);
-  }
 
-  /* ---------- 初始化时种入示例数据（仅首次） ---------- */
+  /* ---------- 鉴权 ---------- */
+  const Auth = {
+    mode: 'login',
+    open(mode = 'login') {
+      this.mode = mode;
+      $('#authTitle').textContent = mode === 'login' ? '登录' : '注册';
+      $('#authSubmit').textContent = mode === 'login' ? '登录' : '注册并登录';
+      $('#authSubtitle').textContent = mode === 'login' ? '登录后即可上传资料、评论互动' : '注册后即享完整功能';
+      $('#authToggleText').textContent = mode === 'login' ? '还没有账号？' : '已有账号？';
+      $('#authToggleLink').textContent = mode === 'login' ? '立即注册' : '直接登录';
+      $('#authModal').classList.remove('hidden');
+      setTimeout(() => $('#authUsername').focus(), 50);
+    },
+    close() { $('#authModal').classList.add('hidden'); $('#authForm').reset(); },
+    toggle() { this.open(this.mode === 'login' ? 'register' : 'login'); },
+    demoLogin() {
+      const users = get(LS.USERS, []);
+      let demo = users.find(u => u.account === 'demo');
+      if (!demo) {
+        demo = { id: 'u_demo', account: 'demo', password: 'demo', name: '体验同学', bio: '这就是体验账号', createdAt: Date.now() };
+        users.push(demo); set(LS.USERS, users);
+      }
+      set(LS.SESSION, { userId: demo.id });
+      this.close();
+      App.renderUserArea();
+      App.reRender();
+      toast('已以体验账号登录');
+    },
+    submit(e) {
+      e.preventDefault();
+      const account = $('#authUsername').value.trim();
+      const password = $('#authPassword').value.trim();
+      if (!account || !password) return toast('请填写完整');
+      const users = get(LS.USERS, []);
+      if (this.mode === 'register') {
+        if (users.find(u => u.account === account)) return toast('该账号已注册');
+        const u = { id: uid(), account, password, name: account, bio: '这家伙很懒，什么也没留下~', createdAt: Date.now() };
+        users.push(u); set(LS.USERS, users);
+        set(LS.SESSION, { userId: u.id });
+        toast('注册成功，欢迎 ' + account);
+      } else {
+        const u = users.find(u => u.account === account && u.password === password);
+        if (!u) return toast('账号或密码错误');
+        set(LS.SESSION, { userId: u.id });
+        toast('登录成功，欢迎回来 ' + u.name);
+      }
+      this.close();
+      App.renderUserArea();
+      App.reRender();
+    }
+  };
+  Auth.logout = function () {
+    localStorage.removeItem(LS.SESSION);
+    App.renderUserArea();
+    App.go('home');
+    toast('已退出登录');
+  };
+
+  /* ---------- 种子数据（含官方权威资料）---------- */
   function seedIfNeeded() {
-    if (localStorage.getItem(LS.SEEDED)) return;
-    const users = get(LS.USERS, []);
-    const demo = { id: 'u_demo', account: 'demo', password: 'demo', name: '体验同学', bio: '我就是来逛逛的～', createdAt: Date.now() - 86400000 * 5 };
-    const lulu = { id: 'u_lulu', account: 'lulu', password: '1234', name: '噜噜学姐', bio: '新闻学大四，分享学习资料ing', createdAt: Date.now() - 86400000 * 30 };
-    const ming = { id: 'u_ming', account: 'ming', password: '1234', name: '小明同学', bio: '爱整理笔记的考研党', createdAt: Date.now() - 86400000 * 15 };
-    users.push(demo, lulu, ming);
-    set(LS.USERS, users);
+    // v3 升级到 v4：注入新官方资料
+    if (localStorage.getItem(LS.SEEDED) === 'sxsx.seeded.v4') return;
 
-    const samples = [
-      // —— 新闻学专业课 ——
-      { title: '新闻学概论·第三章 重点笔记', desc: '马克思主义新闻观与中国新闻业的实际结合。包含课后思考题答案。', major: '新闻学', field: 'period', tags: ['笔记', '期末复习', '重点'], uploaderId: 'u_lulu', type: 'pdf', size: 320000, downloads: 42 },
-      { title: '传播学教程·框架理论 PPT', desc: '老师课上用的PPT，补充了大量案例分析。', major: '传播学', field: 'period', tags: ['PPT', '案例'], uploaderId: 'u_ming', type: 'docx', size: 1280000, downloads: 28 },
-      { title: '新闻采访与写作 期末复习提纲', desc: '整理了全书 8 章的考点与答题模板。', major: '新闻学', field: 'exam', tags: ['提纲', '期末'], uploaderId: 'u_lulu', type: 'pdf', size: 540000, downloads: 67 },
-      { title: '新媒体概论·短视频专题', desc: '短视频传播机制与平台对比分析，配图。', major: '新闻学', field: 'period', tags: ['短视频', '专题'], uploaderId: 'u_ming', type: 'image', size: 210000, downloads: 15 },
-      { title: '新闻评论 优秀范文 50 篇', desc: '包含人民时评、光明时评的精选评论。', major: '新闻学', field: 'period', tags: ['范文', '评论写作'], uploaderId: 'u_lulu', type: 'docx', size: 320000, downloads: 89 },
-      { title: '新闻摄影构图技巧（图解）', desc: '9 种常用构图法，配实拍示例图。', major: '新闻学', field: 'period', tags: ['摄影', '图解'], uploaderId: 'u_lulu', type: 'image', size: 460000, downloads: 51 },
-      { title: '新闻学概论·完整思维导图', desc: '全书 12 章导图合集，XMind 可编辑。', major: '新闻学', field: 'exam', tags: ['思维导图', 'XMind'], uploaderId: 'u_ming', type: 'pdf', size: 720000, downloads: 76 },
+    // 首次：插入用户和示例数据
+    if (!localStorage.getItem(LS.SEEDED)) {
+      const users = get(LS.USERS, []);
+      const demo = { id: 'u_demo', account: 'demo', password: 'demo', name: '体验同学', bio: '我就是来逛逛的～', createdAt: Date.now() - 86400000 * 5 };
+      const lulu = { id: 'u_lulu', account: 'lulu', password: '1234', name: '噜噜学姐', bio: '新闻学大四，分享学习资料ing', createdAt: Date.now() - 86400000 * 30 };
+      const ming = { id: 'u_ming', account: 'ming', password: '1234', name: '小明同学', bio: '爱整理笔记的考研党', createdAt: Date.now() - 86400000 * 15 };
+      users.push(demo, lulu, ming);
+      set(LS.USERS, users);
 
-      // —— 跨专业 / 跨领域（演示"通用投喂"） ——
-      { title: '考研政治·马原精讲笔记', desc: '马克思主义原理高频考点 + 思维框架，适合冲刺阶段。', major: '其他', field: 'kaoyan', tags: ['考研', '政治', '马原'], uploaderId: 'u_ming', type: 'pdf', size: 880000, downloads: 132 },
-      { title: '2025 教资·中学教育知识与能力 真题', desc: '近 5 年真题汇总 + 详细答案解析。', major: '教育学', field: 'jiaozi', tags: ['教资', '真题', '中学'], uploaderId: 'u_lulu', type: 'pdf', size: 1520000, downloads: 256 },
-      { title: '英语六级 高频词汇 800 核心', desc: '按话题分类，配真题例句。', major: '英语', field: 'cet', tags: ['六级', '词汇'], uploaderId: 'u_ming', type: 'docx', size: 240000, downloads: 198 },
-      { title: '法考·民法总则 高频考点', desc: '结合《民法典》整理的核心考点与易错点。', major: '法学', field: 'fakao', tags: ['法考', '民法'], uploaderId: 'u_lulu', type: 'pdf', size: 690000, downloads: 87 },
-      { title: 'CPA·会计 长期股权投资 专题突破', desc: '长投 + 合并报表一体化讲义，附例题。', major: '会计学', field: 'cpa', tags: ['CPA', '会计'], uploaderId: 'u_ming', type: 'pdf', size: 1100000, downloads: 76 },
-      { title: '国考·行测 数量关系 秒杀技巧', desc: '12 大题型、22 个核心公式，配真题演练。', major: '其他', field: 'gwy', tags: ['公务员', '行测'], uploaderId: 'u_lulu', type: 'docx', size: 480000, downloads: 145 },
-      { title: '计算机考研·数据结构 1800 题', desc: '选择题 + 应用题 + 算法设计题，按章节分类。', major: '计算机科学与技术', field: 'kaoyan', tags: ['考研', '数据结构', '刷题'], uploaderId: 'u_ming', type: 'pdf', size: 2100000, downloads: 312 },
-      { title: '汉语言文学·现代文学三十年 复习笔记', desc: '按作家 + 流派整理，附作品分析。', major: '汉语言文学', field: 'exam', tags: ['现当代文学', '笔记'], uploaderId: 'u_lulu', type: 'docx', size: 760000, downloads: 64 },
-      { title: '雅思口语·Part 2 话题库 + 范例', desc: '2025 年 1-4 月换题季全部话题，含 8 分范例。', major: '英语', field: 'ielts', tags: ['雅思', '口语'], uploaderId: 'u_ming', type: 'pdf', size: 1200000, downloads: 178 }
-    ];
-    const list = samples.map((s, i) => {
-      const t = iconThumb(s.type);
-      return {
+      // 内置示例资料
+      const samples = [
+        { title: '新闻学概论·第三章 重点笔记', desc: '马克思主义新闻观与中国新闻业的实际结合。包含课后思考题答案。', major: '新闻学', field: 'period', tags: ['笔记', '期末复习', '重点'], uploaderId: 'u_lulu', type: 'pdf', size: 320000, downloads: 42 },
+        { title: '传播学教程·框架理论 PPT', desc: '老师课上用的PPT，补充了大量案例分析。', major: '传播学', field: 'period', tags: ['PPT', '案例'], uploaderId: 'u_ming', type: 'docx', size: 1280000, downloads: 28 },
+        { title: '新闻采访与写作 期末复习提纲', desc: '整理了全书 8 章的考点与答题模板。', major: '新闻学', field: 'exam', tags: ['提纲', '期末'], uploaderId: 'u_lulu', type: 'pdf', size: 540000, downloads: 67 },
+        { title: '新媒体概论·短视频专题', desc: '短视频传播机制与平台对比分析，配图。', major: '新闻学', field: 'period', tags: ['短视频', '专题'], uploaderId: 'u_ming', type: 'image', size: 210000, downloads: 15 },
+        { title: '新闻评论 优秀范文 50 篇', desc: '包含人民时评、光明时评的精选评论。', major: '新闻学', field: 'period', tags: ['范文', '评论写作'], uploaderId: 'u_lulu', type: 'docx', size: 320000, downloads: 89 },
+        { title: '新闻摄影构图技巧（图解）', desc: '9 种常用构图法，配实拍示例图。', major: '新闻学', field: 'period', tags: ['摄影', '图解'], uploaderId: 'u_lulu', type: 'image', size: 460000, downloads: 51 },
+        { title: '新闻学概论·完整思维导图', desc: '全书 12 章导图合集，XMind 可编辑。', major: '新闻学', field: 'exam', tags: ['思维导图', 'XMind'], uploaderId: 'u_ming', type: 'pdf', size: 720000, downloads: 76 },
+        { title: '考研政治·马原精讲笔记', desc: '马克思主义原理高频考点 + 思维框架，适合冲刺阶段。', major: '其他', field: 'kaoyan', tags: ['考研', '政治', '马原'], uploaderId: 'u_ming', type: 'pdf', size: 880000, downloads: 132 },
+        { title: '2025 教资·中学教育知识与能力 真题', desc: '近 5 年真题汇总 + 详细答案解析。', major: '教育学', field: 'jiaozi', tags: ['教资', '真题', '中学'], uploaderId: 'u_lulu', type: 'pdf', size: 1520000, downloads: 256 },
+        { title: '英语六级 高频词汇 800 核心', desc: '按话题分类，配真题例句。', major: '英语', field: 'cet', tags: ['六级', '词汇'], uploaderId: 'u_ming', type: 'docx', size: 240000, downloads: 198 },
+        { title: '法考·民法总则 高频考点', desc: '结合《民法典》整理的核心考点与易错点。', major: '法学', field: 'fakao', tags: ['法考', '民法'], uploaderId: 'u_lulu', type: 'pdf', size: 690000, downloads: 87 },
+        { title: 'CPA·会计 长期股权投资 专题突破', desc: '长投 + 合并报表一体化讲义，附例题。', major: '会计学', field: 'cpa', tags: ['CPA', '会计'], uploaderId: 'u_ming', type: 'pdf', size: 1100000, downloads: 76 },
+        { title: '国考·行测 数量关系 秒杀技巧', desc: '12 大题型、22 个核心公式，配真题演练。', major: '其他', field: 'gwy', tags: ['公务员', '行测'], uploaderId: 'u_lulu', type: 'docx', size: 480000, downloads: 145 },
+        { title: '计算机考研·数据结构 1800 题', desc: '选择题 + 应用题 + 算法设计题，按章节分类。', major: '计算机科学与技术', field: 'kaoyan', tags: ['考研', '数据结构', '刷题'], uploaderId: 'u_ming', type: 'pdf', size: 2100000, downloads: 312 },
+        { title: '汉语言文学·现代文学三十年 复习笔记', desc: '按作家 + 流派整理，附作品分析。', major: '汉语言文学', field: 'exam', tags: ['现当代文学', '笔记'], uploaderId: 'u_lulu', type: 'docx', size: 760000, downloads: 64 },
+        { title: '雅思口语·Part 2 话题库 + 范例', desc: '2025 年 1-4 月换题季全部话题，含 8 分范例。', major: '英语', field: 'ielts', tags: ['雅思', '口语'], uploaderId: 'u_ming', type: 'pdf', size: 1200000, downloads: 178 }
+      ];
+      const list = samples.map((s, i) => ({
         id: 'r_' + (i + 1),
         title: s.title, desc: s.desc,
         major: s.major, field: s.field,
         tags: s.tags, type: s.type, size: s.size,
         fileName: s.title + '.' + s.type,
         fileData: null,
-        thumb: t,
+        thumb: iconThumb(s.type),
         uploaderId: s.uploaderId,
         createdAt: Date.now() - (i + 1) * 86400000 / 2,
         downloads: s.downloads
-      };
-    });
-    set(LS.RESOURCES, list);
+      }));
+      set(LS.RESOURCES, list);
 
-    // 给示例资料加几条评论
-    const cmts = [
-      { resourceId: 'r_1', userId: 'u_ming', content: '排版很清晰，复习效率 up！', createdAt: Date.now() - 86400000 },
-      { resourceId: 'r_1', userId: 'u_demo', content: '已收藏，谢谢学姐～', createdAt: Date.now() - 3600 * 1000 },
-      { resourceId: 'r_3', userId: 'u_ming', content: '救命稻草般的提纲。', createdAt: Date.now() - 7200 * 1000 },
-      { resourceId: 'r_5', userId: 'u_demo', content: '评论写得真犀利，学到了。', createdAt: Date.now() - 1800 * 1000 }
-    ];
-    set(LS.COMMENTS, cmts);
+      const cmts = [
+        { resourceId: 'r_1', userId: 'u_ming', content: '排版很清晰，复习效率 up！', createdAt: Date.now() - 86400000 },
+        { resourceId: 'r_1', userId: 'u_demo', content: '已收藏，谢谢学姐～', createdAt: Date.now() - 3600 * 1000 },
+        { resourceId: 'r_3', userId: 'u_ming', content: '救命稻草般的提纲。', createdAt: Date.now() - 7200 * 1000 },
+        { resourceId: 'r_5', userId: 'u_demo', content: '评论写得真犀利，学到了。', createdAt: Date.now() - 1800 * 1000 }
+      ];
+      set(LS.COMMENTS, cmts);
+      set(LS.LIKES, { 'r_1': ['u_ming','u_demo'], 'r_3': ['u_lulu','u_ming','u_demo'], 'r_5': ['u_demo'] });
+      set(LS.FAVS, { u_demo: ['r_1', 'r_3'] });
+    }
 
-    // 一些点赞
-    set(LS.LIKES, { 'r_1': ['u_ming','u_demo'], 'r_3': ['u_lulu','u_ming','u_demo'], 'r_5': ['u_demo'] });
-    // 体验同学收藏
-    set(LS.FAVS, { u_demo: ['r_1', 'r_3'] });
+    // 注入官方权威资料（如有 AUTHORITATIVE_RESOURCES）
+    if (window.AUTHORITATIVE_RESOURCES && Array.isArray(window.AUTHORITATIVE_RESOURCES)) {
+      window.AUTHORITATIVE_RESOURCES.forEach(item => {
+        // 标准化入库（链接类型）
+        const r = Feed.normalizeOne({
+          ...item,
+          type: 'link',
+          uploaderId: 'u_official',
+          uploaderName: '官方权威',
+          createdAt: Date.now() - Math.floor(Math.random() * 86400000 * 5)
+        });
+        if (r) Resource.add(r);
+      });
+    }
 
-    localStorage.setItem(LS.SEEDED, '1');
+    localStorage.setItem(LS.SEEDED, 'sxsx.seeded.v4');
   }
 
   /* =========================================================
      渲染
      ========================================================= */
   const App = {
-    state: { view: 'home', major: '全部', field: 'all', keyword: '', sort: 'latest' },
+    state: { view: 'home', major: '全部', field: 'all', keyword: '', sort: 'latest', profileTab: 'uploads' },
 
     init() {
       seedIfNeeded();
@@ -409,33 +433,41 @@
       this.bindUpload();
       this.bindAuth();
       this.bindFeed();
+      this.bindMobileNav();
       this.bindHashRoute();
       this.renderUserArea();
       this.renderHome();
     },
 
-    /* 顶部/底部导航高亮 + 切换视图 */
+    /* 顶部导航 */
     bindNav() {
-      $$('.nav-item').forEach(b => {
+      $$('#topNav .nav-item').forEach(b => {
         b.addEventListener('click', () => this.go(b.dataset.view));
       });
     },
+    /* 底部移动导航 */
+    bindMobileNav() {
+      $$('.nav-item-mobile').forEach(b => {
+        b.addEventListener('click', () => this.go(b.dataset.view));
+      });
+    },
+
     go(view, params) {
       this.state.view = view;
       this.state.params = params;
       $$('.view').forEach(v => v.classList.remove('active'));
       const el = $('#view-' + view);
       if (el) el.classList.add('active');
-      // 顶/底导航高亮
-      $$('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.view === view));
-      window.scrollTo(0, 0);
+      $$('#topNav .nav-item').forEach(n => n.classList.toggle('active', n.dataset.view === view));
+      $$('.nav-item-mobile').forEach(n => n.classList.toggle('active', n.dataset.view === view));
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       this.reRender();
-      // 更新 hash 用于分享
       if (view === 'detail' && params) location.hash = '#/r/' + params;
       else if (view === 'library') location.hash = '#/library';
       else if (view === 'profile') location.hash = '#/me';
       else if (view === 'upload') location.hash = '#/upload';
       else if (view === 'feed') location.hash = '#/feed';
+      else if (view === 'mindmap') location.hash = '#/mindmap';
       else location.hash = '';
     },
     bindHashRoute() {
@@ -449,40 +481,42 @@
       else if (h === '#/me') this.requireAuth(() => this.go('profile'));
       else if (h === '#/upload') this.requireAuth(() => this.go('upload'));
       else if (h === '#/feed') this.go('feed');
+      else if (h === '#/mindmap') this.go('mindmap');
       else this.go('home');
     },
 
-    /* 搜索 + 排序 */
+    /* 搜索 */
     bindSearch() {
+      const input = $('#libSearch');
+      if (!input) return;
       let t;
-      $('#searchInput').addEventListener('input', e => {
+      input.addEventListener('input', e => {
         clearTimeout(t);
         t = setTimeout(() => { this.state.keyword = e.target.value.trim().toLowerCase(); this.renderLibrary(); }, 200);
       });
-      $('#sortSelect').addEventListener('change', e => { this.state.sort = e.target.value; this.renderLibrary(); });
     },
 
     /* 专业 / 领域双维度筛选 */
     renderCategoryTabs() {
-      // 专业
       const majors = ['全部', ...Dict.majors()];
-      $('#majorTabs').innerHTML = majors.map(m =>
-        `<button data-major="${escapeHtml(m)}" class="px-2.5 py-1 rounded-md text-xs border ${this.state.major === m
-          ? 'bg-brand-500 text-white border-brand-500'
-          : 'bg-white text-slate-600 border-slate-200 hover:border-brand-300'}">${escapeHtml(m)}</button>`
-      ).join('');
-      $('#majorTabs').querySelectorAll('button').forEach(b => {
-        b.addEventListener('click', () => { this.state.major = b.dataset.major; this.renderCategoryTabs(); this.renderLibrary(); });
-      });
-      // 领域
       const fields = Dict.fields();
-      $('#fieldTabs').innerHTML = fields.map(f =>
-        `<button data-field="${f.id}" class="px-2.5 py-1 rounded-md text-xs border ${this.state.field === f.id
-          ? 'bg-emerald-500 text-white border-emerald-500'
-          : 'bg-white text-slate-600 border-slate-200 hover:border-emerald-300'}">${f.icon} ${escapeHtml(f.name)}</button>`
-      ).join('');
-      $('#fieldTabs').querySelectorAll('button').forEach(b => {
+      const tabs = $('#categoryTabs');
+      if (!tabs) return;
+      // 领域（核心筛选）
+      const fHtml = `<div class="flex items-center gap-2 mr-2 text-xs text-slate-500 font-medium">🎯 领域：</div>` +
+        fields.map(f =>
+          `<button data-field="${f.id}" class="badge ${this.state.field === f.id ? 'badge-field shadow-md' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'} transition">${f.icon} ${escapeHtml(f.name)}</button>`
+        ).join('');
+      const mHtml = `<div class="w-full basis-full h-0"></div><div class="flex items-center gap-2 mr-2 text-xs text-slate-500 font-medium">📚 专业：</div>` +
+        majors.map(m =>
+          `<button data-major="${escapeHtml(m)}" class="badge ${this.state.major === m ? 'badge-major shadow-md' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'} transition">${escapeHtml(m)}</button>`
+        ).join('');
+      tabs.innerHTML = fHtml + mHtml;
+      tabs.querySelectorAll('[data-field]').forEach(b => {
         b.addEventListener('click', () => { this.state.field = b.dataset.field; this.renderCategoryTabs(); this.renderLibrary(); });
+      });
+      tabs.querySelectorAll('[data-major]').forEach(b => {
+        b.addEventListener('click', () => { this.state.major = b.dataset.major; this.renderCategoryTabs(); this.renderLibrary(); });
       });
     },
 
@@ -490,22 +524,22 @@
     renderUserArea() {
       const u = currentUser();
       const el = $('#userArea');
+      if (!el) return;
       if (u) {
         el.innerHTML = `
-          <button onclick="App.requireAuth(()=>App.go('profile'))" class="hidden md:flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-slate-100">
-            <div class="w-7 h-7 rounded-full bg-brand-500 text-white text-xs flex items-center justify-center">${escapeHtml((u.name || u.account).slice(0,1))}</div>
+          <button onclick="App.requireAuth(()=>App.go('profile'))" class="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full hover:bg-white/60">
+            <div class="w-7 h-7 rounded-full bg-gradient-to-br from-brand-500 to-pink-500 text-white text-xs flex items-center justify-center font-semibold">${escapeHtml((u.name || u.account).slice(0,1))}</div>
             <span class="text-sm text-slate-700">${escapeHtml(u.name || u.account)}</span>
           </button>
-          <button onclick="Auth.open()" class="md:hidden w-8 h-8 rounded-full bg-brand-500 text-white text-xs flex items-center justify-center">${escapeHtml((u.name || u.account).slice(0,1))}</button>
+          <button onclick="App.requireAuth(()=>App.go('profile'))" class="md:hidden w-9 h-9 rounded-full bg-gradient-to-br from-brand-500 to-pink-500 text-white text-xs flex items-center justify-center font-semibold">${escapeHtml((u.name || u.account).slice(0,1))}</button>
         `;
       } else {
         el.innerHTML = `
-          <button onclick="Auth.open('login')" class="hidden md:inline-block text-sm text-slate-600 hover:text-brand-600 mr-2">登录</button>
-          <button onclick="Auth.open('register')" class="px-3 py-1.5 text-sm bg-brand-500 text-white rounded-lg hover:bg-brand-600">注册</button>
+          <button onclick="Auth.open('login')" class="hidden md:inline-block btn-ghost text-sm">登录</button>
+          <button onclick="Auth.open('register')" class="btn-grad text-sm">注册</button>
         `;
       }
     },
-
     requireAuth(cb) {
       if (currentUser()) return cb && cb();
       Auth.open('login');
@@ -517,20 +551,28 @@
       const all = Resource.all();
       const users = get(LS.USERS, []);
       const totalDownloads = all.reduce((s, r) => s + (r.downloads || 0), 0);
-      $('#statCards').innerHTML = [
-        statCard('📚', '资料总数', all.length),
-        statCard('👥', '注册用户', users.length),
-        statCard('⬇️', '累计下载', totalDownloads),
-        statCard('💬', '互动评论', get(LS.COMMENTS, []).length)
-      ].join('');
-      $('#latestGrid').innerHTML = all.slice(0, 8).map(resourceCardHtml).join('') ||
-        '<div class="col-span-full text-center text-slate-400 py-10">暂无资料，去上传第一份吧～</div>';
-      $$('#latestGrid .resource-card').forEach(c => c.addEventListener('click', () => this.go('detail', c.dataset.id)));
+      const official = all.filter(r => r.credibility === '官方').length;
+      const fields = Dict.fields().length - 1;
+      // 数字角标
+      const s1 = $('#statResources'); if (s1) s1.textContent = all.length;
+      const s2 = $('#statOfficial'); if (s2) s2.textContent = official;
+      const s3 = $('#statFields'); if (s3) s3.textContent = fields;
+      const s4 = $('#statDownloads'); if (s4) s4.textContent = totalDownloads;
+
+      // 推荐官方权威资料（取前 6 个）
+      const featured = all.filter(r => r.credibility === '官方').slice(0, 6);
+      const f = $('#featuredResources');
+      if (f) {
+        f.innerHTML = featured.length ? featured.map(r => officialResourceCardHtml(r)).join('') :
+          '<div class="col-span-full text-center text-slate-400 py-10">暂无推荐资料</div>';
+        f.querySelectorAll('.resource-card').forEach(c => c.addEventListener('click', () => this.go('detail', c.dataset.id)));
+      }
     },
 
     /* ============ 渲染：资料库 ============ */
     renderLibrary() {
-      if (!$('#majorTabs').children.length) this.renderCategoryTabs();
+      const tabs = $('#categoryTabs');
+      if (tabs && !tabs.children.length) this.renderCategoryTabs();
       let list = Resource.all();
       if (this.state.major && this.state.major !== '全部') {
         list = list.filter(r => r.major === this.state.major);
@@ -544,19 +586,91 @@
           (r.title + ' ' + r.desc + ' ' + (r.major || '') + ' ' + (r.tags || []).join(' ')).toLowerCase().includes(kw)
         );
       }
-      if (this.state.sort === 'hot')        list.sort((a, b) => Like.count(b.id) - Like.count(a.id));
+      if (this.state.sort === 'hot') list.sort((a, b) => Like.count(b.id) - Like.count(a.id));
       else if (this.state.sort === 'downloads') list.sort((a, b) => (b.downloads||0) - (a.downloads||0));
-      // latest 已是默认序
-      $('#libraryGrid').innerHTML = list.map(resourceCardHtml).join('');
-      $('#emptyLibrary').classList.toggle('hidden', list.length > 0);
-      $$('#libraryGrid .resource-card').forEach(c => c.addEventListener('click', () => this.go('detail', c.dataset.id)));
+      const g = $('#resourceGrid');
+      if (!g) return;
+      g.innerHTML = list.length
+        ? list.map(r => r.credibility === '官方' ? officialResourceCardHtml(r) : resourceCardHtml(r)).join('')
+        : '<div class="col-span-full text-center text-slate-400 py-12">没有匹配的资料，换个筛选条件试试～</div>';
+      g.querySelectorAll('.resource-card').forEach(c => c.addEventListener('click', () => this.go('detail', c.dataset.id)));
+    },
+
+    /* ============ 渲染：思维导图 ============ */
+    renderMindmap() {
+      const svg = $('#mindmapSvg');
+      if (!svg || !window.MIND_MAP) return;
+      const W = 1200, H = 720;
+      svg.innerHTML = '';
+      const root = window.MIND_MAP.root;
+      const rootX = W/2, rootY = 60;
+      // 根节点
+      svg.appendChild(this.mindNodeEl(rootX, rootY, root.label, root.icon, root.color, true));
+
+      // 一级分类：横向 3 列
+      const colCount = root.children.length;
+      const colGap = (W - 200) / colCount;
+      root.children.forEach((c1, i) => {
+        const cx = 100 + colGap * (i + 0.5);
+        const cy = 280;
+        // 边
+        const path = `M${rootX},${rootY+30} Q${rootX},${(rootY+cy)/2} ${cx},${cy-30}`;
+        svg.appendChild(this.mindEdgeEl(path, c1.color));
+        // 节点
+        svg.appendChild(this.mindNodeEl(cx, cy, c1.label, c1.icon, c1.color));
+        // 二级：每列 8 个，纵向
+        const subCount = c1.children.length;
+        const subH = (H - 380) / subCount;
+        c1.children.forEach((c2, j) => {
+          const sx = cx;
+          const sy = 380 + subH * (j + 0.5);
+          const subPath = `M${cx},${cy+30} Q${cx},${(cy+sy)/2} ${sx},${sy-22}`;
+          svg.appendChild(this.mindEdgeEl(subPath, c2.color));
+          svg.appendChild(this.mindNodeEl(sx, sy, c2.label, c2.icon, c2.color));
+        });
+      });
+    },
+    mindNodeEl(x, y, label, icon, color, big) {
+      const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+      g.setAttribute('transform', `translate(${x},${y})`);
+      g.classList.add('mind-node');
+      const rx = big ? 80 : 60;
+      const ry = big ? 28 : 22;
+      // 阴影圆
+      const shadow = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse');
+      shadow.setAttribute('cx', 0); shadow.setAttribute('cy', 4); shadow.setAttribute('rx', rx); shadow.setAttribute('ry', ry);
+      shadow.setAttribute('fill', color); shadow.setAttribute('opacity', '.15');
+      g.appendChild(shadow);
+      // 主体
+      const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+      rect.setAttribute('x', -rx); rect.setAttribute('y', -ry); rect.setAttribute('width', rx*2); rect.setAttribute('height', ry*2);
+      rect.setAttribute('rx', ry); rect.setAttribute('fill', '#fff');
+      rect.setAttribute('stroke', color); rect.setAttribute('stroke-width', '2');
+      g.appendChild(rect);
+      // 文字
+      const t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      t.setAttribute('text-anchor', 'middle'); t.setAttribute('y', 5);
+      t.setAttribute('font-size', big ? 16 : 13); t.setAttribute('font-weight', '600'); t.setAttribute('fill', color);
+      t.textContent = icon + ' ' + label;
+      g.appendChild(t);
+      return g;
+    },
+    mindEdgeEl(d, color) {
+      const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      p.setAttribute('d', d); p.setAttribute('fill', 'none');
+      p.setAttribute('stroke', color); p.setAttribute('stroke-width', '1.8');
+      p.setAttribute('opacity', '.55');
+      p.classList.add('mind-edge');
+      return p;
     },
 
     /* ============ 渲染：详情 ============ */
     renderDetail(id) {
       const r = Resource.byId(id);
+      const el = $('#view-detail');
+      if (!el) return;
       if (!r) {
-        $('#detailContent').innerHTML = '<div class="text-center text-slate-400 py-20">资料不存在或已被删除</div>';
+        el.innerHTML = '<div class="text-center text-slate-400 py-20">资料不存在或已被删除</div>';
         return;
       }
       const uploader = get(LS.USERS, []).find(u => u.id === r.uploaderId);
@@ -568,7 +682,7 @@
         const cu = get(LS.USERS, []).find(u => u.id === c.userId);
         return `
           <div class="flex gap-3 py-3 border-t border-slate-100">
-            <div class="w-8 h-8 rounded-full bg-slate-200 text-slate-600 text-xs flex items-center justify-center flex-shrink-0">${escapeHtml((cu?.name || '?').slice(0,1))}</div>
+            <div class="w-8 h-8 rounded-full bg-gradient-to-br from-brand-500 to-pink-500 text-white text-xs flex items-center justify-center flex-shrink-0">${escapeHtml((cu?.name || '?').slice(0,1))}</div>
             <div class="flex-1">
               <div class="text-sm text-slate-700"><span class="font-medium">${escapeHtml(cu?.name || '匿名')}</span> <span class="text-xs text-slate-400 ml-2">${fmtTime(c.createdAt)}</span></div>
               <div class="text-sm text-slate-600 mt-0.5 whitespace-pre-wrap">${escapeHtml(c.content)}</div>
@@ -576,14 +690,28 @@
           </div>`;
       }).join('') || '<div class="py-6 text-sm text-slate-400 text-center">还没有评论，来抢沙发～</div>';
 
-      const fileTypeBadge = { pdf: 'bg-red-100 text-red-700', docx: 'bg-blue-100 text-blue-700', image: 'bg-emerald-100 text-emerald-700' }[r.type] || 'bg-slate-100 text-slate-600';
+      const fileTypeBadge = { pdf: 'bg-red-100 text-red-700', docx: 'bg-blue-100 text-blue-700', image: 'bg-emerald-100 text-emerald-700', link: 'bg-purple-100 text-purple-700' }[r.type] || 'bg-slate-100 text-slate-600';
       const fieldInfo = Dict.fields().find(f => f.id === r.field);
       const fieldName = fieldInfo ? (fieldInfo.icon + ' ' + fieldInfo.name) : r.field;
 
-      $('#detailContent').innerHTML = `
+      // 来源卡片（官方权威资料）
+      const isOfficial = r.credibility === '官方';
+      const sourceCard = (isOfficial && r.sourceName) ? `
+        <div class="mt-4 p-4 rounded-xl bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-200">
+          <div class="flex items-center gap-2 text-xs font-semibold text-emerald-700 mb-2">
+            <span class="text-base">${escapeHtml(r.sourceIcon || '✅')}</span>
+            <span>官方权威出处</span>
+          </div>
+          <div class="text-sm font-medium text-slate-700">${escapeHtml(r.sourceName)}</div>
+          <a href="${escapeHtml(r.url || r.sourceUrl)}" target="_blank" rel="noopener" class="source-link mt-2 inline-flex">
+            🔗 打开官方页面 →
+          </a>
+        </div>
+      ` : '';
+
+      el.innerHTML = `
         <div class="grid md:grid-cols-3 gap-6">
-          <!-- 左侧：预览 -->
-          <div class="md:col-span-2 bg-white border border-slate-200 rounded-xl overflow-hidden">
+          <div class="md:col-span-2 card overflow-hidden">
             <div class="aspect-[4/3] bg-slate-100 flex items-center justify-center" id="previewArea">
               ${r.thumb ? `<img src="${r.thumb}" class="w-full h-full object-contain" alt="预览"/>` : ''}
             </div>
@@ -592,88 +720,82 @@
               <span class="text-sm text-slate-700">${escapeHtml(r.fileName || r.title + '.' + r.type)}</span>
               <span class="text-xs text-slate-400">· ${fmtSize(r.size || 0)}</span>
               <div class="flex-1"></div>
-              <button id="btnDownload" class="px-3 py-1.5 text-sm bg-brand-500 text-white rounded-lg hover:bg-brand-600 flex items-center gap-1">
+              <button id="btnDownload" class="btn-grad text-sm flex items-center gap-1">
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                下载
+                ${r.type === 'link' ? '打开' : '下载'}
               </button>
             </div>
           </div>
 
-          <!-- 右侧：信息 + 互动 -->
-          <div class="bg-white border border-slate-200 rounded-xl p-5">
-            <h1 class="text-lg font-semibold">${escapeHtml(r.title)}</h1>
+          <div class="card p-5">
+            <h1 class="text-lg font-semibold leading-snug">${escapeHtml(r.title)}</h1>
             <div class="text-xs text-slate-400 mt-1 flex flex-wrap items-center gap-2">
-              <span class="px-1.5 py-0.5 rounded bg-brand-50 text-brand-700">📚 ${escapeHtml(r.major || '未分类')}</span>
-              <span class="px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700">${escapeHtml(fieldName)}</span>
-              <span>·</span>
-              <span>${fmtTime(r.createdAt)}</span>
-              <span>·</span>
-              <span>${r.downloads || 0} 次下载</span>
+              <span class="badge badge-major">📚 ${escapeHtml(r.major || '未分类')}</span>
+              <span class="badge badge-field">${escapeHtml(fieldName)}</span>
+              ${isOfficial ? '<span class="badge badge-official">✅ 官方权威</span>' : ''}
             </div>
+            <div class="text-[11px] text-slate-400 mt-2">${fmtTime(r.createdAt)} · ${r.downloads || 0} 次浏览</div>
             <p class="text-sm text-slate-600 mt-3 leading-relaxed">${escapeHtml(r.desc) || '<span class="text-slate-400">暂无描述</span>'}</p>
             <div class="flex flex-wrap gap-1.5 mt-3">
               ${(r.tags || []).map(t => `<span class="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded">#${escapeHtml(t)}</span>`).join('')}
             </div>
+            ${sourceCard}
 
-            <!-- 上传者 -->
             <div class="mt-4 flex items-center gap-2 p-2.5 bg-slate-50 rounded-lg">
-              <div class="w-9 h-9 rounded-full bg-brand-500 text-white text-sm flex items-center justify-center">${escapeHtml((uploader?.name || '?').slice(0,1))}</div>
+              <div class="w-9 h-9 rounded-full bg-gradient-to-br from-brand-500 to-pink-500 text-white text-sm flex items-center justify-center">${escapeHtml((uploader?.name || r.uploaderName || '?').slice(0,1))}</div>
               <div class="flex-1 min-w-0">
-                <div class="text-sm font-medium truncate">${escapeHtml(uploader?.name || '匿名')}</div>
-                <div class="text-xs text-slate-400 truncate">${escapeHtml(uploader?.bio || '')}</div>
+                <div class="text-sm font-medium truncate">${escapeHtml(uploader?.name || r.uploaderName || '匿名')}</div>
+                <div class="text-xs text-slate-400 truncate">${escapeHtml(uploader?.bio || (r.uploaderName === '官方权威' ? '权威机构官方发布' : ''))}</div>
               </div>
             </div>
 
-            <!-- 操作 -->
             <div class="mt-4 flex gap-2">
-              <button id="btnLike" class="flex-1 py-2 text-sm rounded-lg border ${liked ? 'border-pink-300 bg-pink-50 text-pink-600' : 'border-slate-200 text-slate-600 hover:bg-slate-50'} flex items-center justify-center gap-1">
+              <button id="btnLike" class="flex-1 py-2 text-sm rounded-full border ${liked ? 'border-pink-300 bg-pink-50 text-pink-600' : 'border-slate-200 text-slate-600 hover:bg-slate-50'} flex items-center justify-center gap-1">
                 <span>${liked ? '❤' : '♡'}</span><span id="likeCount">${Like.count(r.id)}</span>
               </button>
-              <button id="btnFav" class="flex-1 py-2 text-sm rounded-lg border ${faved ? 'border-amber-300 bg-amber-50 text-amber-600' : 'border-slate-200 text-slate-600 hover:bg-slate-50'} flex items-center justify-center gap-1">
+              <button id="btnFav" class="flex-1 py-2 text-sm rounded-full border ${faved ? 'border-amber-300 bg-amber-50 text-amber-600' : 'border-slate-200 text-slate-600 hover:bg-slate-50'} flex items-center justify-center gap-1">
                 <span>${faved ? '★' : '☆'}</span><span>${faved ? '已收藏' : '收藏'}</span>
               </button>
               ${me && me.id === r.uploaderId
-                ? `<button id="btnDelete" class="px-3 py-2 text-sm text-red-500 hover:bg-red-50 rounded-lg border border-slate-200">删除</button>`
+                ? `<button id="btnDelete" class="px-3 py-2 text-sm text-red-500 hover:bg-red-50 rounded-full border border-slate-200">删除</button>`
                 : ''}
             </div>
           </div>
         </div>
 
-        <!-- 评论 -->
-        <div class="mt-6 bg-white border border-slate-200 rounded-xl p-5">
-          <h3 class="font-semibold mb-2">评论 <span class="text-sm text-slate-400">(${cmts.length})</span></h3>
+        <div class="mt-6 card p-5">
+          <h3 class="font-semibold mb-2">💬 评论 <span class="text-sm text-slate-400">(${cmts.length})</span></h3>
           <form id="commentForm" class="flex gap-2">
             <input name="content" required maxlength="300" placeholder="${me ? '说点什么...' : '登录后参与评论'}"
-                   class="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-200"
+                   class="flex-1 px-3 py-2 border border-slate-200 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-brand-200"
                    ${me ? '' : 'disabled'} />
-            <button type="submit" class="px-4 py-2 text-sm bg-brand-500 text-white rounded-lg hover:bg-brand-600" ${me ? '' : 'disabled'}>发布</button>
+            <button type="submit" class="btn-grad text-sm" ${me ? '' : 'disabled'}>发布</button>
           </form>
           <div class="mt-2">${commentListHtml}</div>
         </div>
       `;
 
-      // 绑定事件
-      $('#btnLike').addEventListener('click', () => {
+      $('#btnLike')?.addEventListener('click', () => {
         if (!me) return Auth.open('login');
         const likedNow = Like.toggle(r.id, me.id);
-        $('#btnLike').className = 'flex-1 py-2 text-sm rounded-lg border ' +
+        $('#btnLike').className = 'flex-1 py-2 text-sm rounded-full border ' +
           (likedNow ? 'border-pink-300 bg-pink-50 text-pink-600' : 'border-slate-200 text-slate-600 hover:bg-slate-50') +
           ' flex items-center justify-center gap-1';
         $('#btnLike').innerHTML = `<span>${likedNow ? '❤' : '♡'}</span><span id="likeCount">${Like.count(r.id)}</span>`;
         toast(likedNow ? '已点赞' : '已取消点赞');
       });
-      $('#btnFav').addEventListener('click', () => {
+      $('#btnFav')?.addEventListener('click', () => {
         if (!me) return Auth.open('login');
         const favedNow = Fav.toggle(r.id, me.id);
-        $('#btnFav').className = 'flex-1 py-2 text-sm rounded-lg border ' +
+        $('#btnFav').className = 'flex-1 py-2 text-sm rounded-full border ' +
           (favedNow ? 'border-amber-300 bg-amber-50 text-amber-600' : 'border-slate-200 text-slate-600 hover:bg-slate-50') +
           ' flex items-center justify-center gap-1';
         $('#btnFav').innerHTML = `<span>${favedNow ? '★' : '☆'}</span><span>${favedNow ? '已收藏' : '收藏'}</span>`;
         toast(favedNow ? '已加入收藏' : '已取消收藏');
       });
-      $('#btnDownload').addEventListener('click', () => this.downloadResource(r));
+      $('#btnDownload')?.addEventListener('click', () => this.downloadResource(r));
       if (me && me.id === r.uploaderId) {
-        $('#btnDelete').addEventListener('click', () => {
+        $('#btnDelete')?.addEventListener('click', () => {
           if (confirm('确定要删除这份资料吗？此操作不可恢复。')) {
             Resource.remove(r.id);
             toast('已删除');
@@ -694,18 +816,26 @@
           toast('评论已发布');
         });
       }
-      // 渲染真实预览（缩略图基础上）
       this.renderPreview(r);
     },
 
-    /* 详情页：真实预览（仅当用户上传的真实文件支持预览时） */
+    /* 详情页预览（真实文件） */
     async renderPreview(r) {
       const area = $('#previewArea');
       if (!area) return;
-      if (!r.fileData) {
-        // 示例数据：保留已有缩略图
+      if (r.type === 'link') {
+        area.innerHTML = `
+          <div class="text-center p-8">
+            <div class="text-6xl mb-4">${escapeHtml(r.sourceIcon || '🔗')}</div>
+            <div class="text-base text-slate-700 font-medium mb-2">${escapeHtml(r.sourceName || '官方权威资料')}</div>
+            <p class="text-sm text-slate-500 mb-6 max-w-md mx-auto">${escapeHtml(r.desc)}</p>
+            <a href="${escapeHtml(r.url)}" target="_blank" rel="noopener" class="btn-grad inline-flex items-center gap-2">
+              🔗 打开官方页面
+            </a>
+          </div>`;
         return;
       }
+      if (!r.fileData) return;
       try {
         if (r.type === 'image') {
           area.innerHTML = `<img src="${r.fileData}" class="w-full h-full object-contain" alt="预览"/>`;
@@ -721,12 +851,6 @@
           await page.render({ canvasContext: canvas.getContext('2d'), viewport: page.getViewport({ scale: ratio }) }).promise;
           area.innerHTML = '';
           area.appendChild(canvas);
-          // 同时支持翻页
-          const toolbar = document.createElement('div');
-          toolbar.className = 'absolute bottom-2 right-2 bg-white/80 text-xs px-2 py-1 rounded shadow';
-          toolbar.textContent = `PDF · ${pdf.numPages} 页 · 当前 1`;
-          area.style.position = 'relative';
-          area.appendChild(toolbar);
         } else if (r.type === 'docx') {
           const buf = await fetch(r.fileData).then(res => res.arrayBuffer());
           const result = await mammoth.convertToHtml({ arrayBuffer: buf });
@@ -737,18 +861,22 @@
       }
     },
 
-    /* 下载资料（演示用，弹窗提示） */
+    /* 下载 / 打开资料 */
     downloadResource(r) {
       Resource.incDownload(r.id);
+      if (r.type === 'link' && r.url) {
+        window.open(r.url, '_blank', 'noopener');
+        toast('已打开：' + r.title);
+        return;
+      }
       if (r.fileData) {
         const a = document.createElement('a');
         a.href = r.fileData;
         a.download = r.fileName || (r.title + '.' + r.type);
         a.click();
       } else {
-        // 示例数据没有真实文件，提供一个动态生成的占位
         const blob = new Blob([
-          `${r.title}\n\n类别：${r.category}\n标签：${(r.tags||[]).join(', ')}\n描述：${r.desc}\n\n—— 来自 随心资料分享库 示例数据`
+          `${r.title}\n\n类别：${r.major}\n标签：${(r.tags||[]).join(', ')}\n描述：${r.desc}\n\n—— 来自 随心资料分享库 示例数据`
         ], { type: 'text/plain;charset=utf-8' });
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
@@ -756,19 +884,62 @@
         a.click();
         URL.revokeObjectURL(a.href);
       }
-      toast('开始下载：' + r.title);
-      // 重新渲染详情以更新下载数
+      toast('已' + (r.type === 'link' ? '打开' : '开始下载') + '：' + r.title);
       this.renderDetail(r.id);
     },
 
     /* ============ 渲染：上传 ============ */
     bindUpload() {
-      // 动态填充专业 / 领域下拉
+      const form = $('#uploadForm');
+      if (!form) return;
+      form.innerHTML = `
+        <div>
+          <label class="text-sm font-medium text-slate-700">标题 <span class="text-red-500">*</span></label>
+          <input name="title" required maxlength="80" placeholder="给你的资料起个名字吧～" class="mt-1 w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:border-brand-400" />
+        </div>
+        <div>
+          <label class="text-sm font-medium text-slate-700">简介</label>
+          <textarea name="desc" maxlength="200" rows="2" placeholder="一句话介绍这份资料～" class="mt-1 w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:border-brand-400"></textarea>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-sm font-medium text-slate-700">专业</label>
+            <select name="major" id="uploadMajorSelect" class="mt-1 w-full px-3 py-2.5 rounded-lg border border-slate-200 bg-white"></select>
+            <input name="majorNew" placeholder="或新加专业" class="mt-1 w-full px-3 py-2 rounded-lg border border-slate-200 text-sm" />
+          </div>
+          <div>
+            <label class="text-sm font-medium text-slate-700">领域</label>
+            <select name="field" id="uploadFieldSelect" class="mt-1 w-full px-3 py-2.5 rounded-lg border border-slate-200 bg-white"></select>
+            <input name="fieldNew" placeholder="或新加领域" class="mt-1 w-full px-3 py-2 rounded-lg border border-slate-200 text-sm" />
+          </div>
+        </div>
+        <div>
+          <label class="text-sm font-medium text-slate-700">标签（逗号分隔）</label>
+          <input name="tags" placeholder="如：笔记,期末复习,重点" class="mt-1 w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:border-brand-400" />
+        </div>
+        <div>
+          <label class="text-sm font-medium text-slate-700">文件 <span class="text-red-500">*</span></label>
+          <div id="dropZone" class="mt-1 border-2 border-dashed border-slate-200 rounded-xl p-6 text-center cursor-pointer hover:border-brand-300 transition">
+            <input type="file" id="fileInput" accept=".pdf,.docx,.png,.jpg,.jpeg,.gif,.webp" class="hidden" />
+            <div id="fileInfo" class="text-sm text-slate-500">
+              <svg class="mx-auto mb-2 text-slate-300" xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+              </svg>
+              点击或拖拽文件到这里<br/>
+              <span class="text-xs text-slate-400">PDF / DOCX / PNG / JPG，最大 8MB</span>
+            </div>
+          </div>
+        </div>
+        <div class="flex items-center justify-end gap-2">
+          <button type="button" onclick="App.go('feed')" class="btn-ghost text-sm">用投喂更快？</button>
+          <button type="submit" class="btn-grad">📤 上传</button>
+        </div>
+      `;
       const fillUploadSelects = () => {
         const ms = Dict.majors();
-        $('#uploadMajorSelect').innerHTML = ms.map(m => `<option value="${escapeHtml(m)}">${escapeHtml(m)}</option>`).join('');
+        const mSel = $('#uploadMajorSelect'); if (mSel) mSel.innerHTML = ms.map(m => `<option value="${escapeHtml(m)}">${escapeHtml(m)}</option>`).join('');
         const fs = Dict.fields().filter(f => f.id !== 'all');
-        $('#uploadFieldSelect').innerHTML = fs.map(f => `<option value="${f.id}">${f.icon} ${escapeHtml(f.name)}</option>`).join('');
+        const fSel = $('#uploadFieldSelect'); if (fSel) fSel.innerHTML = fs.map(f => `<option value="${f.id}">${f.icon} ${escapeHtml(f.name)}</option>`).join('');
       };
       fillUploadSelects();
 
@@ -785,32 +956,28 @@
           <div class="text-xs text-slate-400 mt-1">${fmtSize(f.size)} · ${f.type || '未知类型'}</div>
           <button type="button" id="clearFile" class="text-xs text-red-500 mt-1 hover:underline">移除</button>
         `;
-        $('#clearFile').addEventListener('click', e => { e.stopPropagation(); input.value = ''; this.resetUploadUI(); });
+        $('#clearFile').addEventListener('click', e => { e.stopPropagation(); input.value = ''; });
       });
-      $('#uploadForm').addEventListener('submit', async e => {
+      form.addEventListener('submit', async e => {
         e.preventDefault();
         if (!currentUser()) return Auth.open('login');
-        const fd = new FormData(e.target);
+        const fd = new FormData(form);
         const file = input.files[0];
         if (!file) return toast('请选择文件');
         const title = (fd.get('title') || '').toString().trim();
         if (!title) return toast('请填写标题');
-        // 专业 / 领域：优先使用"新值"，否则用下拉
         const major = ((fd.get('majorNew') || '').toString().trim()) || (fd.get('major') || '').toString();
         const fieldNew = (fd.get('fieldNew') || '').toString().trim();
-        let field = fieldNew;
-        if (field) {
-          const added = Dict.addField(field);
-          field = 'f_' + added;
-          // 自建领域的稳定 id：用名字
-          field = 'fld_' + added;
+        let field;
+        if (fieldNew) {
+          Dict.addField(fieldNew);
+          field = Dict.fieldIdByName(fieldNew);
         } else {
           field = (fd.get('field') || '').toString();
         }
         if (!major) return toast('请选择或填写专业');
         if (!field) return toast('请选择或填写领域');
         const majorFinal = Dict.addMajor(major) || major;
-        // 重新填充下拉，让新值出现在列表里
         fillUploadSelects();
         try {
           const data = await readFileAsDataURL(file);
@@ -818,23 +985,18 @@
           const type = ext === 'pdf' ? 'pdf' : (ext === 'docx' ? 'docx' : (file.type.startsWith('image/') ? 'image' : ext));
           const thumb = await makeThumbnail(file);
           const r = {
-            id: uid(),
-            title, desc: (fd.get('desc') || '').toString().trim(),
-            major: majorFinal,
-            field,
+            id: uid(), title,
+            desc: (fd.get('desc') || '').toString().trim(),
+            major: majorFinal, field,
             tags: (fd.get('tags') || '').toString().split(/[,，]/).map(s => s.trim()).filter(Boolean),
             type, size: file.size,
-            fileName: file.name,
-            fileData: data,
-            thumb,
+            fileName: file.name, fileData: data, thumb,
             uploaderId: currentUser().id,
-            createdAt: Date.now(),
-            downloads: 0
+            createdAt: Date.now(), downloads: 0
           };
           Resource.add(r);
           toast('上传成功！');
-          e.target.reset();
-          this.resetUploadUI();
+          form.reset();
           this.renderCategoryTabs();
           this.go('detail', r.id);
         } catch (err) {
@@ -842,18 +1004,12 @@
         }
       });
     },
-    resetUploadUI() {
-      $('#fileInfo').innerHTML = `
-        <svg class="mx-auto mb-2 text-slate-300" xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
-        </svg>
-        点击或拖拽文件到这里<br/>
-        <span class="text-xs text-slate-400">PDF / DOCX / PNG / JPG，最大 8MB</span>`;
-    },
 
     /* ============ 渲染：个人中心 ============ */
     renderProfile() {
       const me = currentUser();
+      const el = $('#view-profile');
+      if (!el) return;
       if (!me) return;
       const myUploads = Resource.byUser(me.id);
       const myFavs = Fav.list(me.id).map(id => Resource.byId(id)).filter(Boolean);
@@ -861,14 +1017,14 @@
       const tab = (this.state.profileTab || 'uploads');
 
       const tabBtn = (k, label) =>
-        `<button data-tab="${k}" class="px-3 py-1.5 text-sm rounded-md ${tab === k ? 'bg-brand-500 text-white' : 'text-slate-600 hover:bg-slate-100'}">${label}</button>`;
+        `<button data-tab="${k}" class="px-4 py-1.5 text-sm rounded-full font-medium ${tab === k ? 'bg-gradient-to-r from-brand-500 to-pink-500 text-white shadow' : 'text-slate-600 hover:bg-slate-100'}">${label}</button>`;
 
       const card = r => `
-        <div class="resource-card bg-white border border-slate-200 rounded-lg overflow-hidden cursor-pointer hover:shadow-md transition" data-id="${r.id}">
+        <div class="resource-card card cursor-pointer overflow-hidden" data-id="${r.id}">
           <div class="aspect-[4/3] bg-slate-100">${r.thumb ? `<img src="${r.thumb}" class="w-full h-full object-cover"/>` : ''}</div>
           <div class="p-2.5">
             <div class="text-sm font-medium line-clamp-2">${escapeHtml(r.title)}</div>
-            <div class="text-xs text-slate-400 mt-1 flex justify-between"><span>${fmtTime(r.createdAt)}</span><span>${r.downloads || 0} 下载</span></div>
+            <div class="text-xs text-slate-400 mt-1 flex justify-between"><span>${fmtTime(r.createdAt)}</span><span>${r.downloads || 0} ⬇</span></div>
           </div>
         </div>`;
 
@@ -886,35 +1042,33 @@
               }).join('')}</div>`
             : '<div class="text-center text-slate-400 py-12">还没有评论过</div>');
 
-      $('#profileContent').innerHTML = `
-        <div class="bg-white border border-slate-200 rounded-xl p-6">
+      el.innerHTML = `
+        <div class="card p-6">
           <div class="flex items-center gap-4">
-            <div class="w-16 h-16 rounded-full bg-brand-500 text-white text-2xl flex items-center justify-center">${escapeHtml((me.name||me.account).slice(0,1))}</div>
+            <div class="w-16 h-16 rounded-full bg-gradient-to-br from-brand-500 to-pink-500 text-white text-2xl flex items-center justify-center font-bold">${escapeHtml((me.name||me.account).slice(0,1))}</div>
             <div class="flex-1">
               <div class="text-lg font-semibold flex items-center gap-2">
-                <span id="nameText">${escapeHtml(me.name)}</span>
+                <span>${escapeHtml(me.name)}</span>
                 <button id="editName" class="text-xs text-slate-400 hover:text-brand-600">编辑</button>
               </div>
               <div class="text-xs text-slate-400">账号：${escapeHtml(me.account)} · 加入于 ${fmtTime(me.createdAt)}</div>
             </div>
             <button onclick="Auth.logout()" class="text-sm text-slate-500 hover:text-red-500">退出登录</button>
           </div>
-          <div class="mt-3 text-sm text-slate-600" id="bioText">${escapeHtml(me.bio || '')}</div>
+          <div class="mt-3 text-sm text-slate-600">${escapeHtml(me.bio || '')}</div>
           <div class="grid grid-cols-3 gap-3 mt-5">
-            <div class="bg-slate-50 rounded-lg p-3 text-center"><div class="text-xl font-semibold">${myUploads.length}</div><div class="text-xs text-slate-500">上传资料</div></div>
-            <div class="bg-slate-50 rounded-lg p-3 text-center"><div class="text-xl font-semibold">${myFavs.length}</div><div class="text-xs text-slate-500">收藏资料</div></div>
-            <div class="bg-slate-50 rounded-lg p-3 text-center"><div class="text-xl font-semibold">${myCmts.length}</div><div class="text-xs text-slate-500">发布评论</div></div>
+            <div class="bg-slate-50 rounded-xl p-3 text-center"><div class="text-2xl font-bold text-gradient">${myUploads.length}</div><div class="text-xs text-slate-500">上传资料</div></div>
+            <div class="bg-slate-50 rounded-xl p-3 text-center"><div class="text-2xl font-bold text-gradient">${myFavs.length}</div><div class="text-xs text-slate-500">收藏资料</div></div>
+            <div class="bg-slate-50 rounded-xl p-3 text-center"><div class="text-2xl font-bold text-gradient">${myCmts.length}</div><div class="text-xs text-slate-500">发布评论</div></div>
           </div>
         </div>
-
-        <div class="mt-5 flex items-center gap-2">${tabBtn('uploads', '我上传的')}${tabBtn('favs', '我的收藏')}${tabBtn('comments', '我的评论')}</div>
+        <div class="mt-5 flex items-center gap-2">${tabBtn('uploads', '📤 我上传的')}${tabBtn('favs', '⭐ 我的收藏')}${tabBtn('comments', '💬 我的评论')}</div>
         <div class="mt-4">${content}</div>
       `;
-      $$('#profileContent [data-tab]').forEach(b => b.addEventListener('click', () => { this.state.profileTab = b.dataset.tab; this.renderProfile(); }));
-      $$('#profileContent .resource-card').forEach(c => c.addEventListener('click', () => this.go('detail', c.dataset.id)));
+      el.querySelectorAll('[data-tab]').forEach(b => b.addEventListener('click', () => { this.state.profileTab = b.dataset.tab; this.renderProfile(); }));
+      el.querySelectorAll('.resource-card').forEach(c => c.addEventListener('click', () => this.go('detail', c.dataset.id)));
       $('#editName').addEventListener('click', () => this.editProfile(me));
     },
-
     editProfile(me) {
       const newName = prompt('修改昵称', me.name);
       if (newName == null) return;
@@ -930,17 +1084,81 @@
       toast('已更新');
     },
 
-    /* 鉴权：登录/注册弹窗 */
+    /* 鉴权弹窗 */
     bindAuth() {
-      $('#authForm').addEventListener('submit', Auth.submit.bind(Auth));
-      $('#authToggle').addEventListener('click', () => Auth.toggle());
+      $('#authForm')?.addEventListener('submit', Auth.submit.bind(Auth));
     },
 
     /* ============ 投喂资料 ============ */
     feedFiles: [],
     bindFeed() {
-      // 模板按钮
-      $('#feedTemplateBtn').addEventListener('click', () => {
+      const root = $('#feedForms');
+      if (!root) return;
+      root.innerHTML = `
+        <div class="card p-5 space-y-3">
+          <div class="flex items-center justify-between">
+            <h3 class="font-bold text-gradient">📋 方式 1 · 粘贴 JSON</h3>
+            <div class="flex gap-1">
+              <button id="feedTemplateBtn" class="text-xs px-2 py-1 rounded bg-brand-50 text-brand-700 hover:bg-brand-100">填入模板</button>
+              <button id="feedJsonClear" class="text-xs px-2 py-1 rounded bg-slate-100 text-slate-600 hover:bg-slate-200">清空</button>
+            </div>
+          </div>
+          <textarea id="feedJson" rows="8" placeholder='[{"title":"...","major":"...","field":"...","type":"pdf","size":320000,"desc":"...","tags":["笔记","考研"]}]' class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs font-mono focus:outline-none focus:border-brand-400"></textarea>
+          <button id="feedJsonSubmit" class="btn-grad w-full">入库 JSON</button>
+        </div>
+        <div class="card p-5 space-y-3">
+          <div class="flex items-center justify-between">
+            <h3 class="font-bold text-gradient">📊 方式 2 · 填表投喂</h3>
+            <div class="flex gap-1">
+              <button id="feedLoadSample" class="text-xs px-2 py-1 rounded bg-brand-50 text-brand-700 hover:bg-brand-100">载入示例</button>
+              <button id="feedAddRow" class="text-xs px-2 py-1 rounded bg-slate-100 text-slate-600 hover:bg-slate-200">+ 添加行</button>
+            </div>
+          </div>
+          <datalist id="feedFilesMajorList"></datalist>
+          <datalist id="feedFilesFieldList"></datalist>
+          <div class="overflow-x-auto">
+            <table class="w-full text-xs">
+              <thead class="text-slate-500">
+                <tr class="border-b border-slate-200">
+                  <th class="py-1 pr-2 text-left">#</th>
+                  <th class="py-1 pr-2 text-left">标题</th>
+                  <th class="py-1 pr-2 text-left">专业</th>
+                  <th class="py-1 pr-2 text-left">领域</th>
+                  <th class="py-1 pr-2 text-left">类型</th>
+                  <th class="py-1 pr-2 text-left">大小</th>
+                  <th class="py-1 pr-2 text-left">标签</th>
+                  <th class="py-1 text-left">说明</th>
+                </tr>
+              </thead>
+              <tbody id="feedTbody"></tbody>
+            </table>
+          </div>
+          <div class="flex items-center justify-between text-xs text-slate-500">
+            <span id="feedHint">已填写 0 条</span>
+            <button id="feedTableSubmit" class="btn-grad text-sm">入库表格</button>
+          </div>
+        </div>
+        <div class="card p-5 space-y-3">
+          <h3 class="font-bold text-gradient">📁 方式 3 · 批量拖文件</h3>
+          <p class="text-xs text-slate-500">拖一堆文件过来，自动按扩展名归类，统一入库</p>
+          <div id="feedFilesDrop" class="border-2 border-dashed border-slate-200 rounded-xl p-6 text-center cursor-pointer hover:border-brand-300 transition">
+            <input type="file" id="feedFilesInput" multiple class="hidden" />
+            <div class="text-sm text-slate-500">点击或拖拽文件到这里<br/><span class="text-xs">支持 PDF / DOCX / 图片</span></div>
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <input id="feedFilesMajor" list="feedFilesMajorList" placeholder="📚 专业（默认其他）" class="px-3 py-2 rounded-lg border border-slate-200 text-sm" />
+            <input id="feedFilesField" list="feedFilesFieldList" placeholder="🎯 领域（默认其他）" class="px-3 py-2 rounded-lg border border-slate-200 text-sm" />
+          </div>
+          <div id="feedFilesList" class="text-xs"></div>
+          <button id="feedFilesSubmit" class="btn-grad w-full">批量入库</button>
+        </div>
+        <div class="md:col-span-3 card p-5">
+          <h3 class="font-bold mb-3">🕘 最近入库的资料</h3>
+          <div id="feedRecent" class="space-y-2"></div>
+        </div>
+      `;
+
+      $('#feedTemplateBtn')?.addEventListener('click', () => {
         const tpl = JSON.stringify([
           { title: '考研英语·高频词 800', major: '英语', field: 'kaoyan', type: 'pdf', size: 320000, desc: '近 5 年真题词频统计', tags: ['考研', '词汇'] },
           { title: '教资·小学综合素质 2024 真题', major: '教育学', field: 'jiaozi', type: 'docx', size: 540000, tags: ['教资', '真题'] }
@@ -948,30 +1166,26 @@
         $('#feedJson').value = tpl;
         toast('已填入模板，可直接修改后入库');
       });
-      $('#feedJsonClear').addEventListener('click', () => { $('#feedJson').value = ''; });
-      $('#feedJsonSubmit').addEventListener('click', () => this.feedJsonSubmit());
+      $('#feedJsonClear')?.addEventListener('click', () => { $('#feedJson').value = ''; });
+      $('#feedJsonSubmit')?.addEventListener('click', () => this.feedJsonSubmit());
+      $('#feedAddRow')?.addEventListener('click', () => this.feedAddRow());
+      $('#feedLoadSample')?.addEventListener('click', () => this.feedLoadSample());
+      $('#feedTableSubmit')?.addEventListener('click', () => this.feedTableSubmit());
 
-      // 表格
-      $('#feedAddRow').addEventListener('click', () => this.feedAddRow());
-      $('#feedLoadSample').addEventListener('click', () => this.feedLoadSample());
-      $('#feedTableSubmit').addEventListener('click', () => this.feedTableSubmit());
-
-      // 批量文件
       const dz = $('#feedFilesDrop'), input = $('#feedFilesInput');
       const fillDatalist = () => {
-        $('#feedFilesMajorList').innerHTML = Dict.majors().map(m => `<option value="${escapeHtml(m)}">`).join('');
-        $('#feedFilesFieldList').innerHTML = Dict.fields().filter(f => f.id !== 'all').map(f => `<option value="${escapeHtml(f.name)}">`).join('');
+        const m = $('#feedFilesMajorList'); if (m) m.innerHTML = Dict.majors().map(x => `<option value="${escapeHtml(x)}">`).join('');
+        const f = $('#feedFilesFieldList'); if (f) f.innerHTML = Dict.fields().filter(x => x.id !== 'all').map(x => `<option value="${escapeHtml(x.name)}">`).join('');
       };
       fillDatalist();
       this.feedFillDatalist = fillDatalist;
-      dz.addEventListener('click', () => input.click());
-      ;['dragenter','dragover'].forEach(ev => dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.add('border-brand-400','bg-brand-50'); }));
-      ;['dragleave','drop'].forEach(ev => dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.remove('border-brand-400','bg-brand-50'); }));
-      dz.addEventListener('drop', e => { if (e.dataTransfer.files) { this.feedAddFiles(e.dataTransfer.files); } });
-      input.addEventListener('change', () => { this.feedAddFiles(input.files); input.value = ''; });
-      $('#feedFilesSubmit').addEventListener('click', () => this.feedFilesSubmit());
+      dz?.addEventListener('click', () => input.click());
+      ;['dragenter','dragover'].forEach(ev => dz?.addEventListener(ev, e => { e.preventDefault(); dz.classList.add('border-brand-400','bg-brand-50'); }));
+      ;['dragleave','drop'].forEach(ev => dz?.addEventListener(ev, e => { e.preventDefault(); dz.classList.remove('border-brand-400','bg-brand-50'); }));
+      dz?.addEventListener('drop', e => { if (e.dataTransfer.files) { this.feedAddFiles(e.dataTransfer.files); } });
+      input?.addEventListener('change', () => { this.feedAddFiles(input.files); input.value = ''; });
+      $('#feedFilesSubmit')?.addEventListener('click', () => this.feedFilesSubmit());
     },
-
     feedJsonSubmit() {
       const txt = $('#feedJson').value.trim();
       if (!txt) return toast('请粘贴 JSON 内容');
@@ -990,9 +1204,9 @@
         toast('入库失败，请检查每条至少包含 title / major / field / type');
       }
     },
-
     feedAddRow(data) {
       const tbody = $('#feedTbody');
+      if (!tbody) return;
       const tr = document.createElement('tr');
       tr.className = 'border-b border-slate-100 align-top';
       tr.innerHTML = `
@@ -1032,11 +1246,11 @@
       toast('已载入 3 条示例，可直接修改后入库');
     },
     feedUpdateHint() {
-      const n = $('#feedTbody').children.length;
-      $('#feedHint').textContent = '已填写 ' + n + ' 条';
+      const n = $('#feedTbody')?.children.length || 0;
+      const h = $('#feedHint'); if (h) h.textContent = '已填写 ' + n + ' 条';
     },
     feedTableSubmit() {
-      const rows = Array.from($('#feedTbody').children);
+      const rows = Array.from($('#feedTbody')?.children || []);
       if (!rows.length) return toast('请先添加行');
       const list = rows.map(tr => {
         const obj = {};
@@ -1052,7 +1266,6 @@
         this.renderFeed();
       }
     },
-
     feedAddFiles(fileList) {
       Array.from(fileList).forEach(f => {
         if (f.size > MAX_SIZE) { toast('跳过：' + f.name + ' 超过 8MB'); return; }
@@ -1062,6 +1275,7 @@
     },
     renderFeedFilesList() {
       const el = $('#feedFilesList');
+      if (!el) return;
       if (!this.feedFiles.length) { el.innerHTML = ''; return; }
       el.innerHTML = '<div class="font-medium text-slate-600 mt-2 mb-1">待入库文件：</div>' +
         this.feedFiles.map((f, i) => `<div class="flex items-center gap-2 py-0.5"><span class="truncate flex-1">${escapeHtml(f.name)}</span><span class="text-slate-400">${fmtSize(f.size)}</span><button data-i="${i}" class="rm text-slate-300 hover:text-red-500">✕</button></div>`).join('');
@@ -1083,17 +1297,13 @@
           const thumb = await makeThumbnail(f);
           const title = f.name.replace(/\.[^.]+$/, '');
           Resource.add({
-            id: uid(),
-            title, desc: '',
-            major, field: fieldId,
-            tags: [],
+            id: uid(), title, desc: '',
+            major, field: fieldId, tags: [],
             type: t, size: f.size,
-            fileName: f.name,
-            fileData: data, thumb,
+            fileName: f.name, fileData: data, thumb,
             uploaderId: currentUser() ? currentUser().id : 'u_demo',
             uploaderName: currentUser() ? currentUser().name : '社区贡献',
-            createdAt: Date.now(),
-            downloads: 0
+            createdAt: Date.now(), downloads: 0
           });
           ok++;
         } catch (e) { fail++; }
@@ -1105,24 +1315,25 @@
       this.renderFeed();
       if (this.feedFillDatalist) this.feedFillDatalist();
     },
-
     renderFeed() {
       const recent = Resource.all().slice(0, 6);
-      $('#feedRecent').innerHTML = recent.length
+      const el = $('#feedRecent');
+      if (!el) return;
+      el.innerHTML = recent.length
         ? recent.map(r => {
             const f = Dict.fieldNameById(r.field);
-            return `<div class="resource-card flex items-center gap-3 bg-white border border-slate-200 rounded-lg p-3 cursor-pointer hover:shadow-sm" data-id="${r.id}">
+            return `<div class="resource-card flex items-center gap-3 bg-white border border-slate-200 rounded-lg p-3 cursor-pointer hover:shadow-sm hover:border-brand-300 transition" data-id="${r.id}">
               <div class="w-10 h-10 rounded bg-slate-100 flex items-center justify-center overflow-hidden">${r.thumb ? `<img src="${r.thumb}" class="w-full h-full object-cover"/>` : ''}</div>
               <div class="flex-1 min-w-0">
                 <div class="text-sm font-medium truncate">${escapeHtml(r.title)}</div>
                 <div class="text-xs text-slate-400 truncate">${escapeHtml(r.major || '')} · ${escapeHtml(f?.name || r.field || '')} · ${fmtTime(r.createdAt)} · by ${escapeHtml(r.uploaderName || '社区贡献')}</div>
               </div>
+              ${r.credibility === '官方' ? '<span class="badge badge-official">官方</span>' : ''}
             </div>`;
           }).join('')
         : '<div class="text-center text-slate-400 py-6 text-sm">还没有投喂记录</div>';
-      $$('#feedRecent .resource-card').forEach(c => c.addEventListener('click', () => this.go('detail', c.dataset.id)));
-      // 首次进入：保证表格至少有一空行
-      if (!$('#feedTbody').children.length) this.feedAddRow();
+      el.querySelectorAll('.resource-card').forEach(c => c.addEventListener('click', () => this.go('detail', c.dataset.id)));
+      if (!$('#feedTbody')?.children.length) this.feedAddRow();
     },
 
     /* 重新渲染当前视图 */
@@ -1130,48 +1341,56 @@
       this.renderUserArea();
       if (this.state.view === 'home') this.renderHome();
       else if (this.state.view === 'library') this.renderLibrary();
+      else if (this.state.view === 'mindmap') this.renderMindmap();
       else if (this.state.view === 'detail') this.renderDetail(this.state.params);
-      else if (this.state.view === 'upload') { /* 静态表单，不需重渲染 */ }
       else if (this.state.view === 'profile') this.renderProfile();
       else if (this.state.view === 'feed') this.renderFeed();
     }
   };
 
-  /* 退出登录 */
-  Auth.logout = function () {
-    localStorage.removeItem(LS.SESSION);
-    App.renderUserArea();
-    App.go('home');
-    toast('已退出登录');
-  };
-
-  /* =========================================================
-     通用 HTML 片段
-     ========================================================= */
-  function statCard(icon, label, value) {
-    return `
-      <div class="bg-white border border-slate-200 rounded-xl p-4 flex items-center gap-3">
-        <div class="w-10 h-10 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center text-xl">${icon}</div>
-        <div><div class="text-xl font-semibold">${value}</div><div class="text-xs text-slate-500">${label}</div></div>
-      </div>`;
-  }
+  /* ---------- 通用 HTML 片段 ---------- */
   function resourceCardHtml(r) {
     const uploader = get(LS.USERS, []).find(u => u.id === r.uploaderId);
-    const typeBadge = { pdf: 'bg-red-100 text-red-700', docx: 'bg-blue-100 text-blue-700', image: 'bg-emerald-100 text-emerald-700' }[r.type] || 'bg-slate-100 text-slate-600';
+    const typeBadge = { pdf: 'bg-red-100 text-red-700', docx: 'bg-blue-100 text-blue-700', image: 'bg-emerald-100 text-emerald-700', link: 'bg-purple-100 text-purple-700' }[r.type] || 'bg-slate-100 text-slate-600';
     const f = Dict.fieldNameById(r.field);
     return `
-      <div class="resource-card bg-white border border-slate-200 rounded-xl overflow-hidden cursor-pointer hover:shadow-md transition" data-id="${r.id}">
+      <div class="resource-card card overflow-hidden cursor-pointer" data-id="${r.id}">
         <div class="aspect-[4/3] bg-slate-100 relative">
           ${r.thumb ? `<img src="${r.thumb}" class="w-full h-full object-cover"/>` : ''}
-          <span class="absolute top-2 left-2 text-[10px] px-1.5 py-0.5 rounded ${typeBadge}">${(r.type || '').toUpperCase()}</span>
-          ${f ? `<span class="absolute top-2 right-2 text-[10px] px-1.5 py-0.5 rounded bg-white/85 text-slate-700">${f.icon} ${escapeHtml(f.name)}</span>` : ''}
+          <span class="absolute top-2 left-2 text-[10px] px-2 py-0.5 rounded-full font-semibold ${typeBadge}">${(r.type || '').toUpperCase()}</span>
+          ${f ? `<span class="absolute top-2 right-2 text-[10px] px-2 py-0.5 rounded-full bg-white/90 text-slate-700 font-medium">${f.icon} ${escapeHtml(f.name)}</span>` : ''}
         </div>
         <div class="p-3">
-          <div class="text-sm font-medium line-clamp-2">${escapeHtml(r.title)}</div>
-          <div class="text-[11px] text-slate-400 mt-0.5 truncate">📚 ${escapeHtml(r.major || '其他')}</div>
-          <div class="text-xs text-slate-400 mt-1 flex items-center justify-between">
+          <div class="text-sm font-semibold line-clamp-2 leading-snug">${escapeHtml(r.title)}</div>
+          <div class="text-[11px] text-slate-500 mt-1 truncate">📚 ${escapeHtml(r.major || '其他')}</div>
+          <div class="text-xs text-slate-400 mt-1.5 flex items-center justify-between">
             <span class="truncate">${escapeHtml(uploader?.name || r.uploaderName || '社区贡献')}</span>
             <span class="whitespace-nowrap">${Like.count(r.id)} ❤ · ${r.downloads || 0} ⬇</span>
+          </div>
+        </div>
+      </div>`;
+  }
+  function officialResourceCardHtml(r) {
+    const f = Dict.fieldNameById(r.field);
+    const gradColor = (r.sourceIcon && /\p{Extended_Pictographic}/u.test(r.sourceIcon)) ? '#ddd6fe' : '#dbeafe';
+    return `
+      <div class="resource-card card card-grad-cool overflow-hidden cursor-pointer" data-id="${r.id}">
+        <div class="relative">
+          <div class="aspect-[4/3] flex items-center justify-center" style="background: linear-gradient(135deg, ${gradColor}, #fff);">
+            <div class="text-center">
+              <div class="text-5xl mb-2">${escapeHtml(r.sourceIcon || '📘')}</div>
+              <div class="text-xs text-slate-600 px-3 line-clamp-2">${escapeHtml(r.sourceName || '')}</div>
+            </div>
+          </div>
+          <span class="absolute top-2 left-2 badge badge-official">✅ 官方</span>
+          ${f ? `<span class="absolute top-2 right-2 text-[10px] px-2 py-0.5 rounded-full bg-white/90 text-slate-700 font-medium">${f.icon} ${escapeHtml(f.name)}</span>` : ''}
+        </div>
+        <div class="p-3">
+          <div class="text-sm font-semibold line-clamp-2 leading-snug">${escapeHtml(r.title)}</div>
+          <div class="text-[11px] text-slate-500 mt-1 truncate">📚 ${escapeHtml(r.major || '通用')}</div>
+          <div class="text-xs text-emerald-700 mt-1.5 flex items-center gap-1">
+            <span>${escapeHtml(r.sourceIcon || '🔗')}</span>
+            <span class="truncate">${escapeHtml(r.sourceName || '官方')}</span>
           </div>
         </div>
       </div>`;

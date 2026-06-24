@@ -25,35 +25,52 @@
       theme: {
         extend: {
           colors: {
+            /* === 治愈系配色（薄荷绿 × 浅天蓝 × 淡紫） === */
+            mint: {
+              50:  '#f0ffe6',
+              100: '#e3ffd1',
+              200: '#caffb0',
+              300: '#a8f08b',
+              400: '#82e07a',
+              500: '#5cc56a',
+              600: '#3da355'
+            },
+            sky: {
+              50:  '#e6faff',
+              100: '#d0f6ff',
+              200: '#b3edff',
+              300: '#82f0f9',
+              400: '#5cd9ed',
+              500: '#34bcd6',
+              600: '#1e9bb8'
+            },
+            lilac: {
+              50:  '#f3eaff',
+              100: '#e7d8ff',
+              200: '#cfb8ff',
+              300: '#b69bff',
+              400: '#9a7cf0',
+              500: '#7a5cd9',
+              600: '#5e3fc2'
+            },
+            cream: {
+              50:  '#fffbe6',
+              100: '#fff3c2',
+              200: '#ffe999',
+              300: '#ffd86b'
+            },
+            /* 兼容旧 class（仍可使用，但主题色已切换） */
             brand: {
-              50:  '#f5f3ff',
-              100: '#ede9fe',
-              200: '#ddd6fe',
-              300: '#c4b5fd',
-              400: '#a78bfa',
-              500: '#8b5cf6',
-              600: '#7c3aed',
-              700: '#6d28d9',
-              800: '#5b21b6',
-              900: '#4c1d95'
+              50:  '#f0ffe6', 100: '#e3ffd1', 200: '#caffb0', 300: '#a8f08b',
+              400: '#82e07a', 500: '#5cc56a', 600: '#3da355', 700: '#2c8443', 800: '#226332', 900: '#164521'
             },
             sunset: {
-              50:  '#fff7ed',
-              100: '#ffedd5',
-              200: '#fed7aa',
-              300: '#fdba74',
-              400: '#fb923c',
-              500: '#f97316',
-              600: '#ea580c'
+              50: '#fff3c2', 100: '#ffe999', 200: '#ffd86b', 300: '#ffc83a',
+              400: '#ffb300', 500: '#f29900', 600: '#d97e00'
             },
             ocean: {
-              50:  '#ecfeff',
-              100: '#cffafe',
-              200: '#a5f3fc',
-              300: '#67e8f9',
-              400: '#22d3ee',
-              500: '#06b6d4',
-              600: '#0891b2'
+              50: '#e6faff', 100: '#d0f6ff', 200: '#b3edff', 300: '#82f0f9',
+              400: '#5cd9ed', 500: '#34bcd6', 600: '#1e9bb8'
             }
           },
           fontFamily: {
@@ -75,16 +92,16 @@
   <style>
     /* === 基础 === */
     ::-webkit-scrollbar { width: 8px; height: 8px; }
-    ::-webkit-scrollbar-thumb { background: linear-gradient(180deg,#c4b5fd,#a78bfa); border-radius: 4px; }
-    ::-webkit-scrollbar-thumb:hover { background: linear-gradient(180deg,#a78bfa,#8b5cf6); }
+    ::-webkit-scrollbar-thumb { background: linear-gradient(180deg,#b3edff,#82f0f9); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: linear-gradient(180deg,#82f0f9,#5cd9ed); }
 
     .view { display: none; }
     .view.active { display: block; }
-    .nav-item.active { color: #7c3aed; }
-    .nav-item.active svg { stroke: #7c3aed; }
+    .nav-item.active { color: #3da355; }
+    .nav-item.active svg { stroke: #3da355; }
     .nav-item.active::after {
       content:''; position:absolute; left:50%; transform:translateX(-50%);
-      bottom:0; width:24px; height:2px; background:linear-gradient(90deg,#8b5cf6,#ec4899); border-radius:2px;
+      bottom:0; width:24px; height:2px; background:linear-gradient(90deg,#5cc56a,#82f0f9); border-radius:2px;
     }
     .nav-item { position: relative; }
     .line-clamp-2 {
@@ -108,35 +125,35 @@
     .animate-fade-in-up { animation: fadeInUp .55s ease-out; }
     .animate-scale-in { animation: scaleIn .35s ease-out; }
 
-    /* === 渐变背景 === */
+    /* === 治愈系渐变背景 === */
     .bg-mesh {
-      background-color: #faf5ff;
+      background-color: #ebffd7;
       background-image:
-        radial-gradient(at 20% 10%, rgba(167,139,250,0.18) 0px, transparent 50%),
-        radial-gradient(at 80% 0%, rgba(251,146,60,0.12) 0px, transparent 50%),
-        radial-gradient(at 0% 50%, rgba(34,211,238,0.10) 0px, transparent 50%),
-        radial-gradient(at 80% 80%, rgba(236,72,153,0.10) 0px, transparent 50%),
-        radial-gradient(at 50% 100%, rgba(99,102,241,0.10) 0px, transparent 50%);
+        radial-gradient(at 12% 8%,  rgba(130,240,249,0.55) 0px, transparent 45%),
+        radial-gradient(at 88% 6%,  rgba(207,184,255,0.45) 0px, transparent 45%),
+        radial-gradient(at 6% 92%,  rgba(255,243,194,0.55) 0px, transparent 45%),
+        radial-gradient(at 92% 88%, rgba(168,240,139,0.45) 0px, transparent 45%),
+        linear-gradient(160deg, #ebffd7 0%, #d0f6ff 100%);
     }
     .bg-aurora {
-      background: linear-gradient(125deg, #ede9fe, #fef3c7, #fce7f3, #cffafe, #ede9fe);
+      background: linear-gradient(125deg, #ebffd7, #d0f6ff, #e7d8ff, #fff3c2, #ebffd7);
       background-size: 400% 400%;
       animation: gradient 20s ease infinite;
     }
     .bg-aurora-2 {
-      background: linear-gradient(135deg, #a78bfa, #f472b6, #fb923c, #facc15);
+      background: linear-gradient(135deg, #a8f08b 0%, #82f0f9 50%, #b69bff 100%);
       background-size: 300% 300%;
       animation: gradient 12s ease infinite;
     }
     .text-gradient {
-      background: linear-gradient(90deg, #7c3aed, #ec4899, #f97316);
+      background: linear-gradient(90deg, #3da355, #1e9bb8 45%, #7a5cd9);
       -webkit-background-clip: text;
       background-clip: text;
       -webkit-text-fill-color: transparent;
       color: transparent;
     }
     .text-gradient-cool {
-      background: linear-gradient(90deg, #06b6d4, #6366f1, #ec4899);
+      background: linear-gradient(90deg, #1e9bb8, #7a5cd9, #d97e00);
       -webkit-background-clip: text;
       background-clip: text;
       -webkit-text-fill-color: transparent;
@@ -144,15 +161,16 @@
 
     /* === 卡片 === */
     .card {
-      background: #fff;
-      border: 1px solid rgba(229,231,235,.6);
-      border-radius: 16px;
+      background: #ffffff;
+      border: 1px solid rgba(178,221,200,0.55);
+      border-radius: 20px;
       transition: all .25s ease;
       position: relative;
       overflow: hidden;
+      box-shadow: 0 4px 18px -8px rgba(60,140,120,0.12);
     }
     .card::before {
-      content:''; position:absolute; inset:0; border-radius:16px; padding:1px;
+      content:''; position:absolute; inset:0; border-radius:20px; padding:1px;
       background: linear-gradient(135deg, transparent 0%, transparent 100%);
       -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
       -webkit-mask-composite: xor; mask-composite: exclude;
@@ -160,17 +178,21 @@
     }
     .card:hover {
       transform: translateY(-4px);
-      box-shadow: 0 20px 40px -12px rgba(124,58,237,.15), 0 8px 16px -8px rgba(0,0,0,.06);
-      border-color: rgba(167,139,250,.4);
+      box-shadow: 0 18px 36px -12px rgba(92,197,106,0.28), 0 6px 14px -6px rgba(30,155,184,0.18);
+      border-color: rgba(130,240,249,0.7);
     }
     .card:hover::before {
-      background: linear-gradient(135deg, #a78bfa 0%, #f472b6 50%, #fb923c 100%);
+      background: linear-gradient(135deg, #82f0f9 0%, #b69bff 50%, #ffd86b 100%);
     }
 
-    .card-grad-purple { background: linear-gradient(135deg, #ede9fe 0%, #fff 50%, #fdf4ff 100%); }
-    .card-grad-warm  { background: linear-gradient(135deg, #fff7ed 0%, #fff 50%, #fef3c7 100%); }
-    .card-grad-cool  { background: linear-gradient(135deg, #ecfeff 0%, #fff 50%, #e0f2fe 100%); }
-    .card-grad-pink  { background: linear-gradient(135deg, #fce7f3 0%, #fff 50%, #fdf2f8 100%); }
+    /* 治愈系卡片渐变（替换原彩色） */
+    .card-grad-purple { background: linear-gradient(135deg, #e7d8ff 0%, #ffffff 50%, #f3eaff 100%); }
+    .card-grad-warm  { background: linear-gradient(135deg, #fff3c2 0%, #ffffff 50%, #ebffd7 100%); }
+    .card-grad-cool  { background: linear-gradient(135deg, #d0f6ff 0%, #ffffff 50%, #b3edff 100%); }
+    .card-grad-pink  { background: linear-gradient(135deg, #f0ffe6 0%, #ffffff 50%, #d0f6ff 100%); }
+    .card-grad-mint  { background: linear-gradient(135deg, #e3ffd1 0%, #ffffff 50%, #a8f08b 100%); }
+    .card-grad-sky   { background: linear-gradient(135deg, #d0f6ff 0%, #ffffff 50%, #82f0f9 100%); }
+    .card-grad-lilac { background: linear-gradient(135deg, #e7d8ff 0%, #ffffff 50%, #b69bff 100%); }
 
     /* === 标签徽章 === */
     .badge {
@@ -178,50 +200,90 @@
       padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 600;
       white-space: nowrap;
     }
-    .badge-major { background: #ede9fe; color: #6d28d9; }
-    .badge-field { background: linear-gradient(90deg, #fce7f3, #ede9fe); color: #be185d; }
-    .badge-official { background: linear-gradient(90deg, #d1fae5, #a7f3d0); color: #065f46; }
+    .badge-major { background: #e7d8ff; color: #5e3fc2; }
+    .badge-field { background: linear-gradient(90deg, #e3ffd1, #d0f6ff); color: #1e9bb8; }
+    .badge-official { background: linear-gradient(90deg, #e3ffd1, #b3edff); color: #2c8443; }
     .badge-type { background: #f1f5f9; color: #475569; }
 
     /* === 资料来源按钮 === */
     .source-link {
       display: inline-flex; align-items: center; gap: 4px;
-      font-size: 11px; color: #6d28d9; padding: 2px 6px;
-      border-radius: 6px; background: #f5f3ff;
+      font-size: 11px; color: #2c8443; padding: 2px 6px;
+      border-radius: 6px; background: #e3ffd1;
       transition: all .2s;
     }
-    .source-link:hover { background: #ede9fe; color: #5b21b6; }
+    .source-link:hover { background: #b3edff; color: #1e9bb8; }
 
     /* === 顶部导航 === */
     .top-nav {
-      background: rgba(255,255,255,0.85);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border-bottom: 1px solid rgba(229,231,235,.7);
+      background: rgba(255,255,255,0.78);
+      backdrop-filter: blur(16px) saturate(180%);
+      -webkit-backdrop-filter: blur(16px) saturate(180%);
+      border-bottom: 1px solid rgba(178,221,200,0.55);
     }
     .logo-icon {
-      background: linear-gradient(135deg, #8b5cf6, #ec4899, #f97316);
+      background: linear-gradient(135deg, #82f0f9 0%, #a8f08b 50%, #b69bff 100%);
       background-size: 200% 200%;
-      animation: gradient 6s ease infinite;
+      animation: gradient 8s ease infinite;
     }
 
     /* === 思维导图节点 === */
     .mind-node { cursor: pointer; transition: all .2s; }
-    .mind-node:hover { filter: brightness(1.1) drop-shadow(0 4px 8px rgba(0,0,0,.1)); }
+    .mind-node:hover { filter: brightness(1.05) drop-shadow(0 6px 14px rgba(92,197,106,0.3)); }
     .mind-edge { transition: all .3s; }
     .mind-edge:hover { stroke-width: 2.5; }
+
+    /* === 学科选择器 chip === */
+    .subj-chip {
+      padding: 8px 16px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 600;
+      background: #ffffff;
+      color: #475569;
+      border: 1px solid rgba(178,221,200,0.7);
+      transition: all .2s;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .subj-chip:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 14px rgba(130,240,249,0.45);
+      background: #f0ffe6;
+    }
+    .subj-chip.active {
+      background: linear-gradient(135deg, #a8f08b, #82f0f9);
+      color: #ffffff;
+      border-color: transparent;
+      box-shadow: 0 6px 20px rgba(130,240,249,0.55);
+      transform: translateY(-1px);
+    }
 
     /* === 悬浮动效 === */
     .float-1 { animation: float 6s ease-in-out infinite; }
     .float-2 { animation: float 7s ease-in-out infinite .5s; }
     .float-3 { animation: float 8s ease-in-out infinite 1s; }
 
+    /* === 侧边栏分类树 === */
+    .sidebar-item { transition: all .15s ease; }
+    .sidebar-item:hover { background: rgba(92,197,106,0.08); color: #3da355; }
+    .sidebar-item.active { background: rgba(92,197,106,0.12); color: #3da355; font-weight: 600; }
+    .sidebar-group-toggle { user-select: none; }
+    .sidebar-arrow { display: inline-block; font-size: 10px; transition: transform .2s ease; }
+    .sidebar-arrow.rotate-90 { transform: rotate(90deg); }
+
+    /* 移动端侧边栏切换 */
+    #sidebarToggle:checked ~ #librarySidebarMobile { display: block; }
+    @media (max-width: 768px) {
+      #librarySidebarMobile { display: none; }
+    }
+
     /* === Toast === */
     .toast {
       position: fixed; left: 50%; bottom: 30px; transform: translateX(-50%);
-      background: linear-gradient(90deg, #7c3aed, #ec4899);
+      background: linear-gradient(90deg, #5cc56a, #34bcd6);
       color: #fff; padding: 10px 18px; border-radius: 999px;
-      box-shadow: 0 10px 30px rgba(124,58,237,.4); z-index: 9999;
+      box-shadow: 0 10px 30px rgba(92,197,106,0.4); z-index: 9999;
       animation: toastIn .25s ease;
       font-size: 14px; font-weight: 500;
     }
@@ -229,34 +291,37 @@
 
     /* === 按钮 === */
     .btn-grad {
-      background: linear-gradient(90deg, #7c3aed, #ec4899);
-      color: #fff; padding: 8px 20px; border-radius: 999px; font-weight: 600;
-      transition: all .2s; box-shadow: 0 4px 14px rgba(124,58,237,.3);
+      background: linear-gradient(90deg, #5cc56a 0%, #34bcd6 50%, #7a5cd9 100%);
+      background-size: 200% 200%;
+      color: #fff; padding: 9px 22px; border-radius: 999px; font-weight: 600;
+      transition: all .25s; box-shadow: 0 4px 14px rgba(92,197,106,0.35);
+      animation: gradient 6s ease infinite;
     }
-    .btn-grad:hover { transform: translateY(-1px); box-shadow: 0 8px 22px rgba(124,58,237,.45); }
+    .btn-grad:hover { transform: translateY(-1px); box-shadow: 0 10px 24px rgba(130,240,249,0.55); }
     .btn-ghost {
-      background: rgba(255,255,255,.6); backdrop-filter: blur(8px);
-      color: #6d28d9; padding: 8px 20px; border-radius: 999px; font-weight: 600;
-      border: 1px solid rgba(167,139,250,.4);
+      background: rgba(255,255,255,0.72);
+      backdrop-filter: blur(10px);
+      color: #2c8443; padding: 8px 20px; border-radius: 999px; font-weight: 600;
+      border: 1px solid rgba(130,240,249,0.7);
       transition: all .2s;
     }
-    .btn-ghost:hover { background: rgba(255,255,255,.9); border-color: #8b5cf6; }
+    .btn-ghost:hover { background: rgba(255,255,255,0.95); border-color: #82f0f9; color: #1e9bb8; }
 
     /* === PDF 缩略图 === */
     .pdf-thumb canvas { width: 100% !important; height: 100% !important; object-fit: contain; }
 
-    /* === Hero 装饰 === */
+    /* === Hero 装饰（治愈系柔光） === */
     .hero-blob {
-      position: absolute; border-radius: 50%; filter: blur(60px); opacity: .5; pointer-events: none;
+      position: absolute; border-radius: 50%; filter: blur(60px); opacity: .55; pointer-events: none;
     }
-    .hero-blob-1 { width: 300px; height: 300px; background: #fbbf24; top: -80px; right: -60px; }
-    .hero-blob-2 { width: 280px; height: 280px; background: #f472b6; bottom: -100px; left: -50px; }
-    .hero-blob-3 { width: 240px; height: 240px; background: #34d399; top: 30%; right: 30%; opacity: .3; }
+    .hero-blob-1 { width: 320px; height: 320px; background: #82f0f9; top: -90px; right: -70px; }
+    .hero-blob-2 { width: 300px; height: 300px; background: #a8f08b; bottom: -100px; left: -60px; }
+    .hero-blob-3 { width: 260px; height: 260px; background: #b69bff; top: 30%; right: 30%; opacity: .35; }
 
     /* === 响应式 === */
     @media (max-width: 768px) {
-      .hero-blob-1 { width: 180px; height: 180px; }
-      .hero-blob-2 { width: 160px; height: 160px; }
+      .hero-blob-1 { width: 200px; height: 200px; }
+      .hero-blob-2 { width: 180px; height: 180px; }
     }
 
     /* === 入场延迟 === */
@@ -287,8 +352,9 @@
         <button data-view="home"     class="nav-item px-4 py-1.5 text-sm text-slate-600 hover:text-brand-600 rounded-md font-medium">首页</button>
         <button data-view="library"  class="nav-item px-4 py-1.5 text-sm text-slate-600 hover:text-brand-600 rounded-md font-medium">资料库</button>
         <button data-view="mindmap"  class="nav-item px-4 py-1.5 text-sm text-slate-600 hover:text-brand-600 rounded-md font-medium">分类导图</button>
-        <button data-view="feed"     class="nav-item px-4 py-1.5 text-sm text-slate-600 hover:text-brand-600 rounded-md font-medium">投喂资料</button>
-        <button data-view="upload"   class="nav-item px-4 py-1.5 text-sm text-slate-600 hover:text-brand-600 rounded-md font-medium">上传</button>
+        <button data-view="feed"     class="nav-item px-4 py-1.5 text-sm text-slate-600 hover:text-brand-600 rounded-md font-medium">动态</button>
+        <button data-view="donate"   class="nav-item px-4 py-1.5 text-sm text-slate-600 hover:text-brand-600 rounded-md font-medium">投喂</button>
+        <button data-view="official"  class="nav-item px-4 py-1.5 text-sm text-slate-600 hover:text-brand-600 rounded-md font-medium">权威网址</button>
       </nav>
       <div class="flex items-center gap-2" id="userArea"></div>
     </div>
@@ -299,63 +365,77 @@
 
     <!-- 首页 -->
     <section id="view-home" class="view active fade-in">
-      <div class="relative overflow-hidden rounded-3xl bg-aurora-2 text-white p-8 md:p-14 shadow-xl">
+      <div class="relative overflow-hidden rounded-3xl p-8 md:p-14 shadow-xl border border-white/60" style="background: linear-gradient(135deg, rgba(235,255,215,0.85) 0%, rgba(208,246,255,0.85) 50%, rgba(231,216,255,0.85) 100%); color: #1f2937;">
         <div class="hero-blob hero-blob-1 float-1"></div>
         <div class="hero-blob hero-blob-2 float-2"></div>
         <div class="hero-blob hero-blob-3 float-3"></div>
         <div class="relative z-10 max-w-2xl animate-fade-in-up">
-          <span class="inline-block bg-white/20 backdrop-blur text-xs px-3 py-1.5 rounded-full mb-4 border border-white/30">✨ Web 前端开发 · 实践作品 · 第二版</span>
-          <h1 class="text-3xl md:text-5xl font-bold leading-tight mb-4">资料，从此 <span class="text-yellow-200">随心</span> 取用</h1>
-          <p class="text-white/90 text-base md:text-lg mb-6 leading-relaxed">
-            一个属于大学生的<span class="font-semibold">学习资料共享平台</span>。<br>
+          <span class="inline-block text-xs px-3 py-1.5 rounded-full mb-4 border font-semibold" style="background: rgba(255,255,255,0.85); color: #1e9bb8; border-color: rgba(130,240,249,0.7);">✨ Web 前端开发 · 实践作品 · 治愈系第三版</span>
+          <h1 class="text-3xl md:text-5xl font-bold leading-tight mb-4" style="color:#164521;">资料，从此 <span style="color:#1e9bb8;">随心</span> 取用</h1>
+          <p class="text-base md:text-lg mb-6 leading-relaxed" style="color:#226332;">
+            一个属于大学生的<span class="font-semibold" style="color:#5e3fc2;">学习资料共享平台</span>。<br>
             考研 · 教资 · 四六级 · 法考 · CPA · 雅思 · 托福… 海量官方权威资源，<br class="hidden md:block">一键检索、在线预览、随取随用。
           </p>
           <div class="flex flex-wrap gap-3">
             <button onclick="App.go('library')" class="btn-ghost">📚 立即逛资料库</button>
             <button onclick="App.go('mindmap')" class="btn-ghost">🧭 查看分类导图</button>
-            <button onclick="App.go('upload')" class="btn-ghost">📤 我要分享资料</button>
+            <button onclick="App.go('donate')" class="btn-ghost">🍱 我要投喂资料</button>
           </div>
         </div>
       </div>
 
-      <!-- 数字角标 -->
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 stagger">
-        <div class="card card-grad-purple p-5 text-center">
-          <div class="text-3xl font-bold text-gradient" id="statResources">--</div>
-          <div class="text-xs text-slate-500 mt-1">📚 收录资料</div>
-        </div>
-        <div class="card card-grad-warm p-5 text-center">
-          <div class="text-3xl font-bold text-gradient" id="statOfficial">--</div>
-          <div class="text-xs text-slate-500 mt-1">✅ 官方权威</div>
-        </div>
-        <div class="card card-grad-cool p-5 text-center">
-          <div class="text-3xl font-bold text-gradient" id="statFields">--</div>
-          <div class="text-xs text-slate-500 mt-1">🎯 覆盖领域</div>
-        </div>
-        <div class="card card-grad-pink p-5 text-center">
-          <div class="text-3xl font-bold text-gradient" id="statDownloads">--</div>
-          <div class="text-xs text-slate-500 mt-1">⬇️ 浏览下载</div>
+      <!-- 🆕 上传文件 → 生成导图（新增小板块） -->
+      <h2 class="text-2xl font-bold mt-10 mb-5 flex items-center gap-2">
+        <span class="w-1.5 h-6 rounded" style="background:linear-gradient(180deg,#5cc56a,#1e9bb8);"></span>
+        <span class="text-gradient">📤 上传资料 → 一键生成思维导图</span>
+        <span class="text-xs px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-medium">NEW</span>
+      </h2>
+      <div class="card p-6 md:p-7 mb-2" style="background: linear-gradient(135deg, #ebffd7 0%, #d0f6ff 50%, #e7d8ff 100%);">
+        <div class="grid md:grid-cols-3 gap-5 items-center">
+          <div class="md:col-span-2">
+            <div class="font-bold text-lg mb-1" style="color:#164521;">把学习资料丢进来，导图自己长出来</div>
+            <p class="text-sm text-slate-600 leading-relaxed">支持 <b>.docx / .pdf / .txt / .md</b>，AI 自动提炼层级、生成一张可编辑的思维导图。<br>
+              21 种版式 · 14 个内容模板 · 100+ 词条素材库 · 5 种节点形状 · 改字号/改字色/改形状自由发挥</p>
+            <div class="mt-4 flex flex-wrap gap-2">
+              <button onclick="App.go('mindmapEditor')" class="btn-grad text-sm">📤 立即上传生成</button>
+              <button onclick="App.go('mindmap')" class="btn-ghost text-sm">🧭 浏览学科导图</button>
+            </div>
+          </div>
+          <div class="grid grid-cols-3 gap-2 text-center text-xs">
+            <div class="bg-white/70 rounded-xl py-3 px-2">
+              <div class="text-2xl">①</div>
+              <div class="mt-1 text-slate-600">上传 / 粘贴</div>
+            </div>
+            <div class="bg-white/70 rounded-xl py-3 px-2">
+              <div class="text-2xl">②</div>
+              <div class="mt-1 text-slate-600">智能解析</div>
+            </div>
+            <div class="bg-white/70 rounded-xl py-3 px-2">
+              <div class="text-2xl">③</div>
+              <div class="mt-1 text-slate-600">编辑 / 导出</div>
+            </div>
+          </div>
         </div>
       </div>
 
       <!-- 功能模块 -->
       <h2 class="text-2xl font-bold mt-10 mb-5 flex items-center gap-2">
-        <span class="w-1.5 h-6 bg-gradient-to-b from-brand-500 to-pink-500 rounded"></span>
+        <span class="w-1.5 h-6 rounded" style="background:linear-gradient(180deg,#5cc56a,#82f0f9);"></span>
         <span class="text-gradient">三大核心模块</span>
       </h2>
       <div class="grid md:grid-cols-3 gap-5 stagger">
         <div class="card p-6 cursor-pointer" onclick="App.go('library')">
-          <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-brand-400 to-brand-600 text-white flex items-center justify-center text-2xl mb-4 float-1">📚</div>
+          <div class="w-14 h-14 rounded-2xl text-white flex items-center justify-center text-2xl mb-4 float-1" style="background:linear-gradient(135deg,#a8f08b,#5cc56a);">📚</div>
           <h3 class="font-bold text-lg mb-2">资料模块</h3>
           <p class="text-sm text-slate-600 leading-relaxed">多格式在线预览 · 智能缩略图 · 标签检索 · 分类筛选 · 点赞收藏</p>
         </div>
         <div class="card p-6 cursor-pointer" onclick="App.go('upload')">
-          <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-sunset-400 to-sunset-600 text-white flex items-center justify-center text-2xl mb-4 float-2">📤</div>
+          <div class="w-14 h-14 rounded-2xl text-white flex items-center justify-center text-2xl mb-4 float-2" style="background:linear-gradient(135deg,#82f0f9,#1e9bb8);">📤</div>
           <h3 class="font-bold text-lg mb-2">用户模块</h3>
           <p class="text-sm text-slate-600 leading-relaxed">注册 / 登录 / 个人中心 · 资料上传 · 我的作品管理 · 公开/私有</p>
         </div>
         <div class="card p-6 cursor-pointer" onclick="App.go('feed')">
-          <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-ocean-400 to-ocean-600 text-white flex items-center justify-center text-2xl mb-4 float-3">💬</div>
+          <div class="w-14 h-14 rounded-2xl text-white flex items-center justify-center text-2xl mb-4 float-3" style="background:linear-gradient(135deg,#b69bff,#7a5cd9);">💬</div>
           <h3 class="font-bold text-lg mb-2">分享模块</h3>
           <p class="text-sm text-slate-600 leading-relaxed">评论互动 · 点赞收藏 · 资源分享 · 社区共建 · 经验交流</p>
         </div>
@@ -363,52 +443,105 @@
 
       <!-- 推荐资料 -->
       <h2 class="text-2xl font-bold mt-10 mb-5 flex items-center gap-2">
-        <span class="w-1.5 h-6 bg-gradient-to-b from-brand-500 to-pink-500 rounded"></span>
+        <span class="w-1.5 h-6 rounded" style="background:linear-gradient(180deg,#5cc56a,#82f0f9);"></span>
         <span class="text-gradient">🔥 热门官方权威资料</span>
       </h2>
       <div id="featuredResources" class="grid md:grid-cols-2 lg:grid-cols-3 gap-5"></div>
+
+      <!-- 今日热门 Top 5 -->
+      <h2 class="text-2xl font-bold mt-10 mb-5 flex items-center gap-2">
+        <span class="w-1.5 h-6 rounded" style="background:linear-gradient(180deg,#5cc56a,#1e9bb8);"></span>
+        <span class="text-gradient">⚡ 今日热门 TOP 5</span>
+        <span class="text-xs text-slate-400 font-normal">（基于今日下载 + 点赞实时排名）</span>
+      </h2>
+      <div id="dailyHot" class="card p-4 md:p-5"></div>
     </section>
 
-    <!-- 资料库 -->
+    <!-- 资料库（带分类侧边栏） -->
     <section id="view-library" class="view fade-in">
-      <div class="flex items-end justify-between mb-5 flex-wrap gap-3">
-        <div>
-          <h2 class="text-2xl font-bold text-gradient">📚 资料库</h2>
-          <p class="text-sm text-slate-500 mt-1">多维度筛选 · 实时检索 · 在线预览</p>
-        </div>
-        <div class="flex gap-2">
-          <input id="libSearch" type="text" placeholder="🔍 搜索资料..." class="px-4 py-2 rounded-full border border-slate-200 text-sm w-64 focus:outline-none focus:border-brand-400" />
-          <button onclick="App.go('upload')" class="btn-grad text-sm whitespace-nowrap">+ 上传</button>
+      <div class="flex items-center gap-2 mb-4 md:hidden">
+        <button onclick="document.getElementById('librarySidebar').classList.toggle('hidden');" class="btn-ghost text-sm">☰ 分类</button>
+        <span class="text-sm text-slate-500">资料库</span>
+      </div>
+      <div class="flex gap-5">
+        <!-- 左侧分类侧边栏 -->
+        <aside id="librarySidebar" class="hidden md:block w-60 flex-shrink-0">
+          <div class="sticky top-20">
+            <div class="card p-4 mb-4">
+              <h3 class="font-bold text-sm mb-3 flex items-center gap-1">📂 资料分类</h3>
+              <div id="categoryTree" class="space-y-1 text-sm"></div>
+            </div>
+            <div class="card p-4">
+              <h3 class="font-bold text-sm mb-3 flex items-center gap-1">🔍 快速筛选</h3>
+              <div class="space-y-2">
+                <input id="libSearch" type="text" placeholder="搜索资料..." class="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:border-brand-400" />
+                <div class="flex gap-2">
+                  <button onclick="App.setState({sort:'hot'});App.renderLibrary();" class="text-xs px-3 py-1.5 rounded-full bg-slate-100 hover:bg-orange-100 text-slate-600 hover:text-orange-600 transition">🔥 最热</button>
+                  <button onclick="App.setState({sort:'downloads'});App.renderLibrary();" class="text-xs px-3 py-1.5 rounded-full bg-slate-100 hover:bg-blue-100 text-slate-600 hover:text-blue-600 transition">⬇️ 最多下载</button>
+                  <button onclick="App.setState({sort:null,field:'all',major:'全部'});App.renderLibrary();" class="text-xs px-3 py-1.5 rounded-full bg-slate-100 hover:bg-green-100 text-slate-600 hover:text-green-600 transition">🔄 重置</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </aside>
+        <!-- 右侧内容区 -->
+        <div class="flex-1 min-w-0">
+          <div id="categoryTabs" class="flex flex-wrap gap-2 mb-4"></div>
+          <div id="resourceGrid" class="grid md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
         </div>
       </div>
-      <div id="categoryTabs" class="flex flex-wrap gap-2 mb-5"></div>
-      <div id="resourceGrid" class="grid md:grid-cols-2 lg:grid-cols-3 gap-5"></div>
     </section>
 
     <!-- 思维导图 -->
     <section id="view-mindmap" class="view fade-in">
       <div class="text-center mb-6">
-        <h2 class="text-3xl font-bold text-gradient">🧭 资料分类全景</h2>
-        <p class="text-sm text-slate-500 mt-2">从"专业方向"到"考试领域"再到"学习场景"，一张图看懂所有资料分类</p>
+        <h2 class="text-3xl font-bold text-gradient">🧭 学科知识点导图</h2>
+        <p class="text-sm text-slate-500 mt-2">每个学科一张精细化思维导图，列出板块、章节与重点内容</p>
       </div>
-      <div class="card p-4 md:p-8 overflow-x-auto">
-        <svg id="mindmapSvg" viewBox="0 0 1200 720" class="w-full" style="min-width: 900px;"></svg>
+      <!-- 学科选择器 -->
+      <div id="subjectSelector" class="flex flex-wrap gap-2 mb-4 justify-center"></div>
+      <!-- 我的导图入口 -->
+      <div id="myMindmapsBar" class="card p-4 mb-4 flex items-center justify-between flex-wrap gap-3" style="background: linear-gradient(135deg, #ebffd7 0%, #d0f6ff 50%, #e7d8ff 100%);">
+        <div class="flex items-center gap-3">
+          <div class="w-12 h-12 rounded-2xl text-white flex items-center justify-center text-2xl" style="background: linear-gradient(135deg, #5cc56a, #34bcd6);">🖌️</div>
+          <div>
+            <div class="font-bold text-base" style="color:#164521;">我的思维导图</div>
+            <div class="text-xs text-slate-500">📤 上传文件 → 20 种模板 · 4 大类 · 📚 文字素材库 100+ 词条</div>
+          </div>
+        </div>
+        <div class="flex gap-2">
+          <button onclick="App.go('mindmapEditor')" class="btn-grad text-sm">+ 立即创建</button>
+          <button onclick="App.showUserMindmapsList && App.showUserMindmapsList()" class="btn-ghost text-sm">📂 我的作品</button>
+        </div>
+      </div>
+      <!-- 导图画布 -->
+      <div class="card p-4 md:p-6 overflow-x-auto">
+        <svg id="mindmapSvg" viewBox="0 0 1200 800" class="w-full" style="min-width: 800px;"></svg>
       </div>
       <div class="text-center mt-4 text-xs text-slate-500">
-        💡 提示：思维导图覆盖了 <span class="font-bold text-brand-600">8 大专业方向</span> · <span class="font-bold text-brand-600">7 个考试领域</span> · <span class="font-bold text-brand-600">5 类学习场景</span>
+        💡 共 <span class="font-bold text-brand-600" id="subjCount">10</span> 个学科 · 每个导图按"板块 → 章节 → 重点内容"层级展开
       </div>
     </section>
 
-    <!-- 投喂 -->
-    <section id="view-feed" class="view fade-in">
+    <!-- 官方权威网址导航 -->
+    <section id="view-official" class="view fade-in"></section>
+
+    <!-- 用户自绘思维导图 -->
+    <section id="view-mindmap-editor" class="view fade-in"></section>
+
+    <!-- 动态流（社区互动） -->
+    <section id="view-feed" class="view fade-in"></section>
+
+    <!-- 投喂资料（统一入口：原"上传"改名） -->
+    <section id="view-donate" class="view fade-in">
       <h2 class="text-2xl font-bold text-gradient">🍱 投喂资料</h2>
-      <p class="text-sm text-slate-500 mt-1 mb-5">三种方式，把你手上的资料快速分享到资料库</p>
+      <p class="text-sm text-slate-500 mt-1 mb-5">三种方式，把你手上的资料快速分享到资料库（管理员功能）</p>
       <div class="grid md:grid-cols-3 gap-5" id="feedForms"></div>
     </section>
 
-    <!-- 上传 -->
+    <!-- 投喂表单 -->
     <section id="view-upload" class="view fade-in">
-      <h2 class="text-2xl font-bold text-gradient">📤 上传资料</h2>
+      <h2 class="text-2xl font-bold text-gradient">🍱 投喂资料</h2>
       <p class="text-sm text-slate-500 mt-1 mb-5">支持 PDF / Word / 图片 / 链接，新专业/新领域自动入库</p>
       <form id="uploadForm" class="card p-6 max-w-2xl space-y-4"></form>
     </section>
@@ -436,11 +569,11 @@
     </button>
     <button data-view="feed"    class="nav-item-mobile py-2 text-[10px] text-slate-500 flex flex-col items-center gap-0.5">
       <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-      <span>投喂</span>
+      <span>动态</span>
     </button>
-    <button data-view="upload"  class="nav-item-mobile py-2 text-[10px] text-slate-500 flex flex-col items-center gap-0.5">
+    <button data-view="donate"  class="nav-item-mobile py-2 text-[10px] text-slate-500 flex flex-col items-center gap-0.5">
       <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
-      <span>上传</span>
+      <span>投喂</span>
     </button>
   </nav>
 
@@ -451,7 +584,13 @@
       <p class="text-xs text-slate-500 mb-4" id="authSubtitle">登录后即可上传资料、评论互动</p>
       <form id="authForm" class="space-y-3">
         <input id="authUsername" type="text" placeholder="用户名" class="w-full px-4 py-2.5 rounded-lg border border-slate-200 text-sm focus:outline-none focus:border-brand-400" required />
-        <input id="authPassword" type="password" placeholder="密码" class="w-full px-4 py-2.5 rounded-lg border border-slate-200 text-sm focus:outline-none focus:border-brand-400" required />
+        <input id="authPassword" type="password" placeholder="密码（6 位以上）" class="w-full px-4 py-2.5 rounded-lg border border-slate-200 text-sm focus:outline-none focus:border-brand-400" required />
+        <div id="authRegisterExtras" class="space-y-3 hidden">
+          <input id="authNickname" type="text" placeholder="昵称（选填，默认同账号）" class="w-full px-4 py-2.5 rounded-lg border border-slate-200 text-sm focus:outline-none focus:border-brand-400" />
+          <select id="authSchool" class="w-full px-4 py-2.5 rounded-lg border border-slate-200 text-sm bg-white focus:outline-none focus:border-brand-400">
+            <option value="">🏫 选择你的学校（选填）</option>
+          </select>
+        </div>
         <button type="submit" class="btn-grad w-full" id="authSubmit">登录</button>
       </form>
       <div class="text-xs text-center mt-3 text-slate-500">
@@ -462,6 +601,37 @@
         <a href="javascript:void(0)" onclick="Auth.demoLogin()" class="text-xs text-slate-400 hover:text-brand-600 underline">🎯 一键体验账号 demo / demo</a>
       </div>
       <button onclick="Auth.close()" class="absolute top-3 right-3 text-slate-400 hover:text-slate-600 text-xl">×</button>
+    </div>
+  </div>
+
+  <!-- 编辑个人资料 弹窗 -->
+  <div id="profileEditModal" class="hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="card p-6 w-full max-w-md animate-scale-in">
+      <h3 class="text-lg font-bold mb-1 text-gradient">⚙️ 编辑个人资料</h3>
+      <p class="text-xs text-slate-500 mb-4">修改昵称、头像、学校和个性签名</p>
+      <form id="profileEditForm" class="space-y-3">
+        <div>
+          <label class="text-xs font-medium text-slate-600">头像（点选 emoji）</label>
+          <div id="avatarPicker" class="mt-2 grid grid-cols-8 gap-1.5"></div>
+        </div>
+        <div>
+          <label class="text-xs font-medium text-slate-600">昵称</label>
+          <input id="peName" type="text" maxlength="20" class="mt-1 w-full px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:border-brand-400" />
+        </div>
+        <div>
+          <label class="text-xs font-medium text-slate-600">学校</label>
+          <select id="peSchool" class="mt-1 w-full px-3 py-2 rounded-lg border border-slate-200 text-sm bg-white focus:outline-none focus:border-brand-400"></select>
+        </div>
+        <div>
+          <label class="text-xs font-medium text-slate-600">个性签名</label>
+          <textarea id="peBio" maxlength="80" rows="2" placeholder="一句话介绍下你自己吧~" class="mt-1 w-full px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:border-brand-400 resize-none"></textarea>
+        </div>
+        <div class="flex gap-2 pt-1">
+          <button type="button" onclick="document.getElementById('profileEditModal').classList.add('hidden')" class="btn-ghost flex-1 text-sm">取消</button>
+          <button type="submit" class="btn-grad flex-1 text-sm">保存</button>
+        </div>
+      </form>
+      <button onclick="document.getElementById('profileEditModal').classList.add('hidden')" class="absolute top-3 right-3 text-slate-400 hover:text-slate-600 text-xl">×</button>
     </div>
   </div>
 
